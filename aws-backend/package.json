@@ -1,0 +1,38 @@
+{
+  "name": "buaip-aws-backend",
+  "version": "1.0.0",
+  "description": "BUAIP AWS Backend - Complete serverless infrastructure",
+  "scripts": {
+    "build": "tsc",
+    "deploy": "cd infra && npx cdk deploy --all --require-approval never",
+    "deploy:stack": "cd infra && npx cdk deploy BuaipStack --require-approval never",
+    "synth": "cd infra && npx cdk synth",
+    "diff": "cd infra && npx cdk diff",
+    "destroy": "cd infra && npx cdk destroy --all",
+    "bootstrap": "cd infra && npx cdk bootstrap",
+    "seed:schemes": "node scripts/seed-schemes.js",
+    "seed:mandi": "node scripts/seed-mandi-data.js",
+    "test:lambda": "node scripts/test-lambdas.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.500.0",
+    "@aws-sdk/client-comprehend": "^3.500.0",
+    "@aws-sdk/client-dynamodb": "^3.500.0",
+    "@aws-sdk/client-eventbridge": "^3.500.0",
+    "@aws-sdk/client-polly": "^3.500.0",
+    "@aws-sdk/client-rekognition": "^3.500.0",
+    "@aws-sdk/client-s3": "^3.500.0",
+    "@aws-sdk/client-sns": "^3.500.0",
+    "@aws-sdk/client-translate": "^3.500.0",
+    "@aws-sdk/lib-dynamodb": "^3.500.0",
+    "aws-cdk-lib": "^2.130.0",
+    "constructs": "^10.3.0",
+    "esbuild": "^0.20.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.130",
+    "@types/node": "^20.19.37",
+    "aws-cdk": "^2.130.0",
+    "typescript": "^5.3.0"
+  }
+}
