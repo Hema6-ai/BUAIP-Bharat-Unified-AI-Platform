@@ -1,0 +1,326 @@
+{
+  "logistics_providers": [
+    {
+      "provider": "Delhivery",
+      "service_type": "Surface",
+      "weight_slabs": [
+        {
+          "weight_range": "0-0.5 kg",
+          "zones": {
+            "local": {"cost_per_kg": 25, "delivery_days": "1-2"},
+            "zonal": {"cost_per_kg": 30, "delivery_days": "2-3"},
+            "metro": {"cost_per_kg": 35, "delivery_days": "3-4"},
+            "roi": {"cost_per_kg": 40, "delivery_days": "4-6"},
+            "northeast": {"cost_per_kg": 55, "delivery_days": "6-8"}
+          }
+        },
+        {
+          "weight_range": "0.5-1 kg",
+          "zones": {
+            "local": {"cost_per_kg": 35, "delivery_days": "1-2"},
+            "zonal": {"cost_per_kg": 42, "delivery_days": "2-3"},
+            "metro": {"cost_per_kg": 48, "delivery_days": "3-4"},
+            "roi": {"cost_per_kg": 55, "delivery_days": "4-6"},
+            "northeast": {"cost_per_kg": 75, "delivery_days": "6-8"}
+          }
+        },
+        {
+          "weight_range": "1-5 kg",
+          "zones": {
+            "local": {"cost_per_kg": 30, "delivery_days": "1-2"},
+            "zonal": {"cost_per_kg": 38, "delivery_days": "2-3"},
+            "metro": {"cost_per_kg": 45, "delivery_days": "3-4"},
+            "roi": {"cost_per_kg": 52, "delivery_days": "4-6"},
+            "northeast": {"cost_per_kg": 70, "delivery_days": "6-8"}
+          }
+        }
+      ],
+      "cod_availability": true,
+      "cod_charges": "₹30 + 2% of order value",
+      "return_pickup": true,
+      "return_charges": "Same as forward + ₹20 handling",
+      "average_rto_rate": "12-15%",
+      "serviceability": "28000+ pincodes",
+      "tracking_quality": "Excellent (real-time)",
+      "claims_process": "7-15 days",
+      "best_for": ["E-commerce", "High volume", "Multi-state"],
+      "pros": ["Wide coverage", "Good tracking", "Tech integration"],
+      "cons": ["High RTO in tier 3", "COD remittance delay 7-10 days"]
+    },
+    {
+      "provider": "Shiprocket",
+      "service_type": "Aggregator (uses Delhivery, BlueDart, Ekart)",
+      "weight_slabs": [
+        {
+          "weight_range": "0-0.5 kg",
+          "zones": {
+            "local": {"cost_per_kg": 28, "delivery_days": "1-2"},
+            "zonal": {"cost_per_kg": 33, "delivery_days": "2-3"},
+            "metro": {"cost_per_kg": 38, "delivery_days": "3-4"},
+            "roi": {"cost_per_kg": 43, "delivery_days": "4-6"},
+            "northeast": {"cost_per_kg": 60, "delivery_days": "6-8"}
+          }
+        },
+        {
+          "weight_range": "0.5-1 kg",
+          "zones": {
+            "local": {"cost_per_kg": 38, "delivery_days": "1-2"},
+            "zonal": {"cost_per_kg": 45, "delivery_days": "2-3"},
+            "metro": {"cost_per_kg": 52, "delivery_days": "3-4"},
+            "roi": {"cost_per_kg": 58, "delivery_days": "4-6"},
+            "northeast": {"cost_per_kg": 80, "delivery_days": "6-8"}
+          }
+        },
+        {
+          "weight_range": "1-5 kg",
+          "zones": {
+            "local": {"cost_per_kg": 33, "delivery_days": "1-2"},
+            "zonal": {"cost_per_kg": 40, "delivery_days": "2-3"},
+            "metro": {"cost_per_kg": 48, "delivery_days": "3-4"},
+            "roi": {"cost_per_kg": 55, "delivery_days": "4-6"},
+            "northeast": {"cost_per_kg": 75, "delivery_days": "6-8"}
+          }
+        }
+      ],
+      "cod_availability": true,
+      "cod_charges": "₹25 + 2% of order value",
+      "return_pickup": true,
+      "return_charges": "Forward + ₹25 handling",
+      "average_rto_rate": "13-16%",
+      "serviceability": "27000+ pincodes (via partner network)",
+      "tracking_quality": "Good (multi-courier tracking)",
+      "claims_process": "10-20 days",
+      "best_for": ["SME sellers", "Multi-courier management", "Shopify/WooCommerce"],
+      "pros": ["Single dashboard for multi-courier", "Easy integration", "Lower entry barrier"],
+      "cons": ["Slightly higher cost", "Claims slower than direct courier", "Support quality varies"]
+    },
+    {
+      "provider": "Ekart (Flipkart Logistics)",
+      "service_type": "Surface",
+      "weight_slabs": [
+        {
+          "weight_range": "0-0.5 kg",
+          "zones": {
+            "local": {"cost_per_kg": 22, "delivery_days": "1-2"},
+            "zonal": {"cost_per_kg": 27, "delivery_days": "2-3"},
+            "metro": {"cost_per_kg": 32, "delivery_days": "3-4"},
+            "roi": {"cost_per_kg": 38, "delivery_days": "4-6"},
+            "northeast": {"cost_per_kg": 52, "delivery_days": "6-8"}
+          }
+        },
+        {
+          "weight_range": "0.5-1 kg",
+          "zones": {
+            "local": {"cost_per_kg": 32, "delivery_days": "1-2"},
+            "zonal": {"cost_per_kg": 38, "delivery_days": "2-3"},
+            "metro": {"cost_per_kg": 45, "delivery_days": "3-4"},
+            "roi": {"cost_per_kg": 52, "delivery_days": "4-6"},
+            "northeast": {"cost_per_kg": 70, "delivery_days": "6-8"}
+          }
+        },
+        {
+          "weight_range": "1-5 kg",
+          "zones": {
+            "local": {"cost_per_kg": 28, "delivery_days": "1-2"},
+            "zonal": {"cost_per_kg": 35, "delivery_days": "2-3"},
+            "metro": {"cost_per_kg": 42, "delivery_days": "3-4"},
+            "roi": {"cost_per_kg": 48, "delivery_days": "4-6"},
+            "northeast": {"cost_per_kg": 65, "delivery_days": "6-8"}
+          }
+        }
+      ],
+      "cod_availability": true,
+      "cod_charges": "₹20 + 1.5% of order value",
+      "return_pickup": true,
+      "return_charges": "Forward cost only (no extra handling)",
+      "average_rto_rate": "10-12% (best in industry)",
+      "serviceability": "25000+ pincodes",
+      "tracking_quality": "Excellent (Flipkart ecosystem)",
+      "claims_process": "5-10 days (fastest)",
+      "best_for": ["Flipkart sellers", "High volume", "Low RTO priority"],
+      "pros": ["Lowest cost", "Best RTO rate", "Flipkart integration", "Fast claims"],
+      "cons": ["Primarily for Flipkart sellers", "Limited API access", "Less flexibility"]
+    },
+    {
+      "provider": "Blue Dart",
+      "service_type": "Express",
+      "weight_slabs": [
+        {
+          "weight_range": "0-0.5 kg",
+          "zones": {
+            "local": {"cost_per_kg": 45, "delivery_days": "1"},
+            "zonal": {"cost_per_kg": 55, "delivery_days": "1-2"},
+            "metro": {"cost_per_kg": 65, "delivery_days": "2-3"},
+            "roi": {"cost_per_kg": 75, "delivery_days": "3-4"},
+            "northeast": {"cost_per_kg": 95, "delivery_days": "4-5"}
+          }
+        },
+        {
+          "weight_range": "0.5-1 kg",
+          "zones": {
+            "local": {"cost_per_kg": 60, "delivery_days": "1"},
+            "zonal": {"cost_per_kg": 72, "delivery_days": "1-2"},
+            "metro": {"cost_per_kg": 85, "delivery_days": "2-3"},
+            "roi": {"cost_per_kg": 95, "delivery_days": "3-4"},
+            "northeast": {"cost_per_kg": 120, "delivery_days": "4-5"}
+          }
+        },
+        {
+          "weight_range": "1-5 kg",
+          "zones": {
+            "local": {"cost_per_kg": 52, "delivery_days": "1"},
+            "zonal": {"cost_per_kg": 65, "delivery_days": "1-2"},
+            "metro": {"cost_per_kg": 78, "delivery_days": "2-3"},
+            "roi": {"cost_per_kg": 88, "delivery_days": "3-4"},
+            "northeast": {"cost_per_kg": 110, "delivery_days": "4-5"}
+          }
+        }
+      ],
+      "cod_availability": true,
+      "cod_charges": "₹40 + 2% of order value",
+      "return_pickup": true,
+      "return_charges": "Forward + ₹40 handling",
+      "average_rto_rate": "8-10% (premium service)",
+      "serviceability": "22000+ pincodes",
+      "tracking_quality": "Excellent (DHL network)",
+      "claims_process": "3-7 days",
+      "best_for": ["Premium products", "Time-sensitive", "High-value items"],
+      "pros": ["Fastest delivery", "Best reliability", "Low damage rate", "Premium handling"],
+      "cons": ["Highest cost (2-3x others)", "Limited tier 3 coverage", "High minimum charges"]
+    },
+    {
+      "provider": "DTDC",
+      "service_type": "Surface + Express",
+      "weight_slabs": [
+        {
+          "weight_range": "0-0.5 kg",
+          "zones": {
+            "local": {"cost_per_kg": 30, "delivery_days": "2-3"},
+            "zonal": {"cost_per_kg": 36, "delivery_days": "3-4"},
+            "metro": {"cost_per_kg": 42, "delivery_days": "4-5"},
+            "roi": {"cost_per_kg": 48, "delivery_days": "5-7"},
+            "northeast": {"cost_per_kg": 65, "delivery_days": "7-10"}
+          }
+        },
+        {
+          "weight_range": "0.5-1 kg",
+          "zones": {
+            "local": {"cost_per_kg": 40, "delivery_days": "2-3"},
+            "zonal": {"cost_per_kg": 48, "delivery_days": "3-4"},
+            "metro": {"cost_per_kg": 56, "delivery_days": "4-5"},
+            "roi": {"cost_per_kg": 62, "delivery_days": "5-7"},
+            "northeast": {"cost_per_kg": 85, "delivery_days": "7-10"}
+          }
+        },
+        {
+          "weight_range": "1-5 kg",
+          "zones": {
+            "local": {"cost_per_kg": 35, "delivery_days": "2-3"},
+            "zonal": {"cost_per_kg": 43, "delivery_days": "3-4"},
+            "metro": {"cost_per_kg": 52, "delivery_days": "4-5"},
+            "roi": {"cost_per_kg": 58, "delivery_days": "5-7"},
+            "northeast": {"cost_per_kg": 78, "delivery_days": "7-10"}
+          }
+        }
+      ],
+      "cod_availability": true,
+      "cod_charges": "₹35 + 2% of order value",
+      "return_pickup": true,
+      "return_charges": "Forward + ₹30 handling",
+      "average_rto_rate": "15-18%",
+      "serviceability": "20000+ pincodes",
+      "tracking_quality": "Average (manual updates common)",
+      "claims_process": "15-30 days",
+      "best_for": ["Budget shipping", "Non-urgent orders", "Heavy items"],
+      "pros": ["Lower cost than BlueDart", "Good for bulk", "Heavy parcel expertise"],
+      "cons": ["Slower delivery", "Higher RTO", "Tracking delays", "Customer complaints higher"]
+    },
+    {
+      "provider": "India Post",
+      "service_type": "Speed Post",
+      "weight_slabs": [
+        {
+          "weight_range": "0-0.5 kg",
+          "zones": {
+            "local": {"cost_per_kg": 35, "delivery_days": "2-3"},
+            "zonal": {"cost_per_kg": 40, "delivery_days": "3-5"},
+            "metro": {"cost_per_kg": 45, "delivery_days": "4-6"},
+            "roi": {"cost_per_kg": 50, "delivery_days": "5-8"},
+            "northeast": {"cost_per_kg": 60, "delivery_days": "7-12"}
+          }
+        },
+        {
+          "weight_range": "0.5-1 kg",
+          "zones": {
+            "local": {"cost_per_kg": 45, "delivery_days": "2-3"},
+            "zonal": {"cost_per_kg": 52, "delivery_days": "3-5"},
+            "metro": {"cost_per_kg": 58, "delivery_days": "4-6"},
+            "roi": {"cost_per_kg": 65, "delivery_days": "5-8"},
+            "northeast": {"cost_per_kg": 80, "delivery_days": "7-12"}
+          }
+        },
+        {
+          "weight_range": "1-5 kg",
+          "zones": {
+            "local": {"cost_per_kg": 40, "delivery_days": "2-3"},
+            "zonal": {"cost_per_kg": 48, "delivery_days": "3-5"},
+            "metro": {"cost_per_kg": 55, "delivery_days": "4-6"},
+            "roi": {"cost_per_kg": 60, "delivery_days": "5-8"},
+            "northeast": {"cost_per_kg": 75, "delivery_days": "7-12"}
+          }
+        }
+      ],
+      "cod_availability": true,
+      "cod_charges": "₹20 + 1% of order value",
+      "return_pickup": false,
+      "return_charges": "Customer pays return postage",
+      "average_rto_rate": "20-25% (highest)",
+      "serviceability": "150000+ pincodes (best coverage)",
+      "tracking_quality": "Poor (limited digital tracking)",
+      "claims_process": "30-60 days (slowest)",
+      "best_for": ["Remote areas", "Government tenders", "Low-value items"],
+      "pros": ["Cheapest option", "Widest coverage", "Reaches villages", "Government backing"],
+      "cons": ["Slowest delivery", "Highest RTO", "Poor tracking", "Manual processes", "Lost parcels common"]
+    }
+  ],
+  "zone_definitions": {
+    "local": "Same city (within 100 km)",
+    "zonal": "Same state or neighboring state (100-500 km)",
+    "metro": "Delhi, Mumbai, Bangalore, Chennai, Kolkata, Hyderabad (500-1500 km)",
+    "roi": "Rest of India (1500+ km)",
+    "northeast": "Arunachal Pradesh, Assam, Manipur, Meghalaya, Mizoram, Nagaland, Tripura, Sikkim"
+  },
+  "cost_optimization_tips": [
+    "Use Ekart if selling on Flipkart (30-40% cheaper)",
+    "Use Delhivery/Shiprocket for multi-platform (balance cost and service)",
+    "Use BlueDart only for premium/high-value (electronics, jewelry)",
+    "Avoid India Post for e-commerce (high RTO kills margins)",
+    "Negotiate rates after 500+ shipments/month (10-25% discount possible)",
+    "Enable forward charge waiver on RTO (saves 50% on failed orders)",
+    "Use zone-based pricing to pass logistics cost to customer",
+    "Metro-to-metro shipments are most profitable (low cost, low RTO)",
+    "Northeast shipments need 2x margin buffer (high cost + high RTO)",
+    "COD adds ₹30-40 per order - push prepaid with discounts"
+  ],
+  "rto_reduction_strategies": [
+    "Call customer before dispatch (reduces RTO by 30%)",
+    "Use address verification APIs (Google Maps, Delhivery Address Verify)",
+    "Avoid COD for repeat RTO customers (block based on phone/address)",
+    "Offer prepaid discount (saves COD charges + RTO risk)",
+    "Use OTP-based delivery (prevents fake delivery reports)",
+    "WhatsApp tracking updates (reduces anxiety-based RTO)",
+    "Flexible delivery slots (reduces 'not at home' RTO)",
+    "Quality product photos (reduces wrong expectation RTO)"
+  ],
+  "metadata": {
+    "last_updated": "2026-03-08",
+    "data_source": "BUAIP GlobalSeller Intelligence + Courier rate cards + Seller feedback",
+    "coverage": "Top 6 logistics providers covering 95% of India e-commerce volume",
+    "usage_notes": "Rates are indicative base rates for 1000+ orders/month. Actual rates vary by contract, volume, and route. Always negotiate with courier partners.",
+    "industry_benchmarks": {
+      "average_logistics_cost_percentage": "8-15% of product selling price",
+      "breakeven_logistics_margin": "Product margin must be > 20% to absorb logistics + RTO",
+      "cod_vs_prepaid_rto": "COD RTO: 18-25%, Prepaid RTO: 5-10%"
+    }
+  }
+}

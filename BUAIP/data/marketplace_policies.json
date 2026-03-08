@@ -1,0 +1,307 @@
+{
+  "platforms": {
+    "amazon_in": {
+      "platform_name": "Amazon.in",
+      "policy_categories": [
+        {
+          "category": "Account Health",
+          "critical_metrics": {
+            "order_defect_rate": {
+              "threshold": "< 1%",
+              "components": ["Negative feedback", "A-to-Z claims", "Chargebacks"],
+              "violation_severity": "HIGH",
+              "consequence": "Account suspension if > 1% for 60 days",
+              "remedy": "Appeal within 17 hours of suspension. Provide POA (Plan of Action)."
+            },
+            "late_dispatch_rate": {
+              "threshold": "< 4%",
+              "violation_severity": "MEDIUM",
+              "consequence": "Featured merchant status loss. Search ranking penalty.",
+              "remedy": "Enable Seller Fulfilled Prime (SFP) or use FBA."
+            },
+            "cancellation_rate": {
+              "threshold": "< 2.5%",
+              "violation_severity": "HIGH",
+              "consequence": "Account deactivation if > 2.5% consistently.",
+              "remedy": "Stock management + automated inventory sync."
+            },
+            "valid_tracking_rate": {
+              "threshold": "> 95%",
+              "violation_severity": "MEDIUM",
+              "consequence": "Shipping setting restrictions. Buy Shipping penalty.",
+              "remedy": "Use Amazon-integrated carriers (Bluedart, Delhivery)."
+            }
+          }
+        },
+        {
+          "category": "Product Compliance",
+          "violations": [
+            {
+              "violation": "Inauthentic Product",
+              "triggers": ["Customer complaint", "Brand gating", "Test buy failure"],
+              "severity": "CRITICAL",
+              "consequence": "Immediate listing removal + possible account suspension",
+              "remedy": "Provide invoices, authorization letters, supply chain proof within 24 hours.",
+              "prevention": "Source from authorized distributors. Keep invoices 365 days."
+            },
+            {
+              "violation": "Restricted Product",
+              "triggers": ["Pesticides without license", "Medical devices without approval", "Alcohol"],
+              "severity": "CRITICAL",
+              "consequence": "Account termination + legal liability",
+              "remedy": "No remedy. Do not list restricted items.",
+              "prevention": "Check Amazon Restricted Products page before listing."
+            },
+            {
+              "violation": "Product Safety",
+              "triggers": ["BIS certification missing", "Safety recalls", "Customer injury"],
+              "severity": "HIGH",
+              "consequence": "Listing blocked + legal notice + INR hold",
+              "remedy": "Provide BIS/ISI certificate + safety test reports.",
+              "prevention": "Never skip certification for electronics, toys, food."
+            },
+            {
+              "violation": "Intellectual Property",
+              "triggers": ["Brand complaint", "Copyright notice", "Patent claim"],
+              "severity": "HIGH",
+              "consequence": "ASIN removal + account suspension after 3 strikes",
+              "remedy": "Retract appeal if genuine. Provide authorization if licensed.",
+              "prevention": "Do not use brand names/logos without permission."
+            }
+          ]
+        },
+        {
+          "category": "Listing Quality",
+          "violations": [
+            {
+              "violation": "Inaccurate Product Information",
+              "triggers": ["Customer complaints", "A-to-Z claims", "Returns for wrong item"],
+              "severity": "MEDIUM",
+              "consequence": "Listing suppression. Search ranking drop.",
+              "remedy": "Update listing accurately. Contact support to reinstate.",
+              "prevention": "Use correct title, image, description, attributes."
+            },
+            {
+              "violation": "Prohibited Content",
+              "triggers": ["External links", "Contact info", "Promotional language"],
+              "severity": "MEDIUM",
+              "consequence": "Listing removed. Repeat = account warning.",
+              "remedy": "Edit listing to remove violations.",
+              "prevention": "No emails, phones, URLs, competitor mentions in listing."
+            }
+          ]
+        },
+        {
+          "category": "Pricing & Promotions",
+          "violations": [
+            {
+              "violation": "Price Gouging",
+              "triggers": ["Price 50%+ higher than recent avg", "Emergency/disaster pricing"],
+              "severity": "HIGH",
+              "consequence": "Listing blocked. Account review. Negative PR risk.",
+              "remedy": "Adjust price to market rate. Explain cost increase.",
+              "prevention": "Do not spike prices during crises (COVID, floods, etc)."
+            },
+            {
+              "violation": "Misuse of Promotions",
+              "triggers": ["Fake discount (no real MRP)", "Coupon abuse", "Referral gaming"],
+              "severity": "MEDIUM",
+              "consequence": "Promotion revoked. Account flagged.",
+              "remedy": "Follow MRP laws. Genuine discounts only.",
+              "prevention": "MRP must be printed on package. Do not inflate MRP."
+            }
+          ]
+        }
+      ],
+      "appeals_process": {
+        "response_time": "17 hours for critical violations",
+        "poa_structure": [
+          "1. Root cause (why it happened)",
+          "2. Immediate actions taken (what you did)",
+          "3. Long-term prevention (how you'll prevent future)"
+        ],
+        "poa_tips": [
+          "Be specific. No generic templates.",
+          "Attach proof (invoices, screenshots, SOPs).",
+          "Show systemic changes, not one-time fixes.",
+          "Admit fault. Do not blame Amazon or customers."
+        ],
+        "rejection_rate": "60-70% of first appeals rejected",
+        "success_strategy": "Resubmit with more proof and detail. Escalate to jeff@amazon.com (Bezos escalation route) for unjust cases."
+      },
+      "policy_resources": [
+        "https://sellercentral.amazon.in/gp/help/1801",
+        "https://sellercentral.amazon.in/gp/help/G200164330",
+        "https://sellercentral.amazon.in/gp/help/G200500120"
+      ]
+    },
+    "flipkart": {
+      "platform_name": "Flipkart",
+      "policy_categories": [
+        {
+          "category": "Service Level",
+          "critical_metrics": {
+            "on_time_dispatch": {
+              "threshold": "> 90%",
+              "violation_severity": "HIGH",
+              "consequence": "Listing suppression. Account review after 7 days.",
+              "remedy": "Improve fulfillment process. Use Flipkart Assured (F-Assured)."
+            },
+            "return_rate": {
+              "threshold": "< 10% (category dependent)",
+              "violation_severity": "MEDIUM",
+              "consequence": "Quality deep-dive. Possible listing block.",
+              "remedy": "Improve product quality. Accurate descriptions."
+            },
+            "customer_rating": {
+              "threshold": "> 3.5 stars",
+              "violation_severity": "MEDIUM",
+              "consequence": "Listing suppression at < 3.0 stars.",
+              "remedy": "Address negative reviews. Improve service."
+            }
+          }
+        },
+        {
+          "category": "Product Authenticity",
+          "violations": [
+            {
+              "violation": "Counterfeit Product",
+              "triggers": ["Brand owner complaint", "Mystery shopping", "Lab test failure"],
+              "severity": "CRITICAL",
+              "consequence": "Immediate delisting + account suspension + legal action",
+              "remedy": "Provide purchase invoices from authorized source. 24-48 hour window.",
+              "prevention": "Source only from brand or authorized distributors."
+            },
+            {
+              "violation": "Replica / Imitation",
+              "triggers": ["Similar brand name", "Logo misuse", "Misleading description"],
+              "severity": "HIGH",
+              "consequence": "ASIN block + penalty deduction from payments",
+              "remedy": "Remove listing voluntarily. Appeal if genuine.",
+              "prevention": "Do not use words like 'similar to [brand]' or copy designs."
+            }
+          ]
+        },
+        {
+          "category": "Cancellation & RTO",
+          "violations": [
+            {
+              "violation": "High Cancellation Rate",
+              "triggers": ["Seller cancellation > 1%", "Stock issues", "Pricing errors"],
+              "severity": "HIGH",
+              "consequence": "Penalty deductions. Account suspension after repeated issues.",
+              "remedy": "Enable real-time inventory sync. Better stock management.",
+              "prevention": "Do not oversell. Pause listings if out of stock."
+            },
+            {
+              "violation": "Return-to-Origin (RTO) Abuse",
+              "triggers": ["RTO > 15%", "Quality issues", "Wrong product sent"],
+              "severity": "MEDIUM",
+              "consequence": "RTO charges applied. Listing quality flag.",
+              "remedy": "Improve QC. Use better packaging. Verify address.",
+              "prevention": "Call customer before dispatch for confirmation."
+            }
+          ]
+        },
+        {
+          "category": "Pricing & Discounts",
+          "violations": [
+            {
+              "violation": "Unrealistic Pricing",
+              "triggers": ["₹1 pricing", "₹0.01 listings", "Price < cost"],
+              "severity": "MEDIUM",
+              "consequence": "Listing flagged. Account review.",
+              "remedy": "Correct pricing to realistic value.",
+              "prevention": "Do not game system with ultra-low pricing."
+            },
+            {
+              "violation": "Discount Misrepresentation",
+              "triggers": ["Fake MRP sticker", "Inflated original price"],
+              "severity": "HIGH",
+              "consequence": "Listing removal. Legal notice (Consumer Protection Act).",
+              "remedy": "Use genuine MRP. Follow legal metrology rules.",
+              "prevention": "MRP must match product package. No sticker manipulation."
+            }
+          ]
+        }
+      ],
+      "appeals_process": {
+        "response_time": "48-72 hours",
+        "appeal_format": "Submit via Seller Panel > Support > Appeal",
+        "success_tips": [
+          "Attach proof of authorization",
+          "Show corrective actions",
+          "Provide supplier invoices",
+          "Demonstrate quality control measures"
+        ],
+        "escalation": "Email seller-support@flipkart.com for critical issues"
+      },
+      "policy_resources": [
+        "https://seller.flipkart.com/knowledge-center",
+        "https://seller.flipkart.com/policies"
+      ]
+    },
+    "meesho": {
+      "platform_name": "Meesho",
+      "policy_categories": [
+        {
+          "category": "Product Quality",
+          "violations": [
+            {
+              "violation": "Sub-standard Product",
+              "triggers": ["High return rate", "Quality complaints", "Size mismatch"],
+              "severity": "MEDIUM",
+              "consequence": "Penalty charges. Listing demotion.",
+              "remedy": "Improve QC. Replace faulty products.",
+              "prevention": "Clear size charts. Accurate product images."
+            },
+            {
+              "violation": "Fake Branded Product",
+              "triggers": ["Brand complaint", "Customer report"],
+              "severity": "HIGH",
+              "consequence": "Account ban. Payment hold.",
+              "remedy": "Limited appeal window. Provide authorization.",
+              "prevention": "Do not claim brand affiliation without permission."
+            }
+          ]
+        },
+        {
+          "category": "Fulfillment",
+          "violations": [
+            {
+              "violation": "Late Dispatch",
+              "triggers": ["Dispatch > 2 days", "Non-tracking updates"],
+              "severity": "MEDIUM",
+              "consequence": "Lower search ranking. Account review.",
+              "remedy": "Use Meesho Mall (faster fulfillment).",
+              "prevention": "Auto-sync with courier partners."
+            }
+          ]
+        }
+      ],
+      "appeals_process": {
+        "response_time": "3-5 business days",
+        "appeal_method": "In-app support chat only",
+        "success_rate": "Lower than Amazon/Flipkart (manual review)"
+      },
+      "policy_resources": [
+        "https://supplier.meesho.com/help"
+      ]
+    }
+  },
+  "metadata": {
+    "last_updated": "2026-03-08",
+    "coverage": "Amazon.in, Flipkart, Meesho (top 3 platforms by GMV)",
+    "data_source": "BUAIP GlobalSeller Intelligence + Seller policy docs",
+    "usage_notes": "Policies change frequently. Always cross-check with official platform seller center.",
+    "compliance_tips": [
+      "Maintain 365-day invoice records",
+      "Never list without proper certification (BIS/FSSAI/ISI)",
+      "Monitor account health daily",
+      "Respond to customer queries within 24 hours",
+      "Use FBA/F-Assured for better protection",
+      "Keep 10-15% safety stock buffer",
+      "Enable auto-inventory sync across platforms"
+    ]
+  }
+}

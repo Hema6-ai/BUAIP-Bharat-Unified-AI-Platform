@@ -1,0 +1,753 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { callBedrock } from '@/app/lib/bedrock';
+
+interface UnifiedAIRequest {
+  userMessage: string;
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  sessionId?: string;
+}
+
+type EligibilityFieldKey =
+  | 'gender'
+  | 'age'
+  | 'state'
+  | 'district'
+  | 'residence'
+  | 'category'
+  | 'monthlyIncome'
+  | 'occupation'
+  | 'education'
+  | 'studentStatus'
+  | 'employmentStatus'
+  | 'entrepreneurStatus'
+  | 'farmerStatus'
+  | 'landOwnership'
+  | 'disabilityStatus'
+  | 'maritalStatus'
+  | 'minorityStatus'
+  | 'bplStatus'
+  | 'seniorCitizenStatus';
+
+interface EligibilityField {
+  key: EligibilityFieldKey;
+  label: string;
+  question: string;
+}
+
+interface SessionState {
+  mode: 'idle' | 'scheme';
+  currentFieldIndex: number;
+  profile: Partial<Record<EligibilityFieldKey, string>>;
+  pendingConfirmation?: {
+    field: EligibilityFieldKey;
+    normalizedValue: string;
+    prompt: string;
+  };
+  updatedAt: number;
+}
+
+interface FieldValidationResult {
+  ok: boolean;
+  normalizedValue?: string;
+  clarification?: string;
+  confirmationPrompt?: string;
+  confirmationValue?: string;
+}
+
+const ELIGIBILITY_FIELDS: EligibilityField[] = [
+  { key: 'gender', label: 'Gender', question: 'What is your gender?' },
+  { key: 'age', label: 'Age', question: 'What is your age in completed years?' },
+  { key: 'state', label: 'State', question: 'Which state do you currently live in?' },
+  { key: 'district', label: 'District', question: 'Which district do you currently live in?' },
+  {
+    key: 'residence',
+    label: 'Residence',
+    question: 'Do you live in an urban area (city/town) or a rural area (village)?',
+  },
+  {
+    key: 'category',
+    label: 'Social Category',
+    question: 'What is your social category? (General / OBC / SC / ST)',
+  },
+  {
+    key: 'monthlyIncome',
+    label: 'Monthly Household Income',
+    question: 'What is your monthly household income in rupees (approximately)?',
+  },
+  {
+    key: 'occupation',
+    label: 'Occupation Status',
+    question: 'What is your current occupation status?',
+  },
+  {
+    key: 'education',
+    label: 'Education Level',
+    question: 'What is the highest education level you have completed?',
+  },
+  {
+    key: 'studentStatus',
+    label: 'Student Status',
+    question: 'Are you currently a student? (Yes / No)',
+  },
+  {
+    key: 'employmentStatus',
+    label: 'Employment Status',
+    question: 'Are you currently employed? (Yes / No, and brief details if needed)',
+  },
+  {
+    key: 'entrepreneurStatus',
+    label: 'Entrepreneur Status',
+    question: 'Are you an entrepreneur or business owner? (Yes / No)',
+  },
+  {
+    key: 'farmerStatus',
+    label: 'Farmer Status',
+    question: 'Are you involved in farming or agricultural activities? (Yes / No)',
+  },
+  {
+    key: 'landOwnership',
+    label: 'Land Ownership',
+    question: 'Do you or your family own agricultural land? (Yes / No, and details if yes)',
+  },
+  {
+    key: 'disabilityStatus',
+    label: 'Disability Status',
+    question: 'Do you have any disability? (Yes / No)',
+  },
+  {
+    key: 'maritalStatus',
+    label: 'Marital Status',
+    question: 'What is your marital status? (Unmarried / Married / Divorced / Widowed)',
+  },
+  {
+    key: 'minorityStatus',
+    label: 'Minority Status',
+    question: 'Do you belong to a minority community? (Yes / No)',
+  },
+  {
+    key: 'bplStatus',
+    label: 'BPL/Ration Card Status',
+    question: 'Do you have a BPL or eligible ration card? (Yes / No)',
+  },
+  {
+    key: 'seniorCitizenStatus',
+    label: 'Senior Citizen Status',
+    question: 'Are you a senior citizen (60 years or above)? (Yes / No)',
+  },
+];
+
+const sessions = new Map<string, SessionState>();
+const SESSION_TTL_MS = 60 * 60 * 1000;
+
+const STATE_ABBREVIATIONS: Record<string, string> = {
+  ap: 'Andhra Pradesh',
+  mp: 'Madhya Pradesh',
+  up: 'Uttar Pradesh',
+  tn: 'Tamil Nadu',
+  wb: 'West Bengal',
+  mh: 'Maharashtra',
+  gj: 'Gujarat',
+  ka: 'Karnataka',
+  tg: 'Telangana',
+  ts: 'Telangana',
+  kl: 'Kerala',
+  rj: 'Rajasthan',
+  pb: 'Punjab',
+  hr: 'Haryana',
+  hp: 'Himachal Pradesh',
+  jk: 'Jammu and Kashmir',
+  od: 'Odisha',
+  br: 'Bihar',
+  jh: 'Jharkhand',
+  cg: 'Chhattisgarh',
+  as: 'Assam',
+  nl: 'Nagaland',
+  mn: 'Manipur',
+  mz: 'Mizoram',
+  tr: 'Tripura',
+  ml: 'Meghalaya',
+  ar: 'Arunachal Pradesh',
+  sk: 'Sikkim',
+  ga: 'Goa',
+  uk: 'Uttarakhand',
+  dl: 'Delhi',
+};
+
+function purgeExpiredSessions() {
+  const now = Date.now();
+  for (const [key, value] of sessions.entries()) {
+    if (now - value.updatedAt > SESSION_TTL_MS) {
+      sessions.delete(key);
+    }
+  }
+}
+
+function getOrCreateSession(sessionId: string): SessionState {
+  const existing = sessions.get(sessionId);
+  if (existing) {
+    existing.updatedAt = Date.now();
+    return existing;
+  }
+
+  const fresh: SessionState = {
+    mode: 'idle',
+    currentFieldIndex: 0,
+    profile: {},
+    updatedAt: Date.now(),
+  };
+
+  sessions.set(sessionId, fresh);
+  return fresh;
+}
+
+function startSchemeEligibilityFlow(session: SessionState) {
+  session.mode = 'scheme';
+  session.currentFieldIndex = 0;
+  session.profile = {};
+  session.pendingConfirmation = undefined;
+  session.updatedAt = Date.now();
+  advanceToNextUnfilledField(session);
+}
+
+function getCurrentField(session: SessionState): EligibilityField | null {
+  if (session.currentFieldIndex < 0 || session.currentFieldIndex >= ELIGIBILITY_FIELDS.length) {
+    return null;
+  }
+  return ELIGIBILITY_FIELDS[session.currentFieldIndex] || null;
+}
+
+function applyDerivedProfileFields(session: SessionState) {
+  const ageValue = session.profile.age;
+  if (!ageValue) {
+    return;
+  }
+
+  const age = Number(ageValue);
+  if (!Number.isFinite(age)) {
+    return;
+  }
+
+  // Do not ask senior citizen question if age already determines the answer.
+  session.profile.seniorCitizenStatus = age >= 60 ? 'Yes' : 'No';
+}
+
+function advanceToNextUnfilledField(session: SessionState) {
+  applyDerivedProfileFields(session);
+
+  while (session.currentFieldIndex < ELIGIBILITY_FIELDS.length) {
+    const field = ELIGIBILITY_FIELDS[session.currentFieldIndex];
+    if (!field) {
+      break;
+    }
+
+    const value = session.profile[field.key];
+    if (value && value.trim().length > 0) {
+      session.currentFieldIndex += 1;
+      continue;
+    }
+
+    break;
+  }
+}
+
+function isGreeting(text: string): boolean {
+  return /^(hi|hello|hey|namaste|namaskar|good\s*(morning|afternoon|evening))\b/i.test(
+    text.trim()
+  );
+}
+
+function isSchemeIntent(text: string): boolean {
+  return /(scheme|yojana|eligib|benefit|government\s+scheme|govt\s+scheme|myscheme)/i.test(text);
+}
+
+function isResetIntent(text: string): boolean {
+  return /(start\s+over|restart|reset|new\s+profile|begin\s+again)/i.test(text);
+}
+
+function parseYesNo(text: string): 'yes' | 'no' | null {
+  const normalized = text.trim().toLowerCase();
+  if (/^(yes|y|haan|ha|ji|correct|right|true)$/.test(normalized)) {
+    return 'yes';
+  }
+  if (/^(no|n|nahi|nahin|false|incorrect)$/.test(normalized)) {
+    return 'no';
+  }
+  return null;
+}
+
+function isMeaningfulAnswer(answer: string): boolean {
+  const trimmed = answer.trim();
+  if (!trimmed) {
+    return false;
+  }
+  if (/^(skip|next|idk|i\s*don'?t\s*know|dont\s*know|not\s*sure)$/i.test(trimmed)) {
+    return false;
+  }
+  return true;
+}
+
+function normalizeBasicYesNoField(answer: string): string | null {
+  const parsed = parseYesNo(answer);
+  if (parsed === 'yes') {
+    return 'Yes';
+  }
+  if (parsed === 'no') {
+    return 'No';
+  }
+  return null;
+}
+
+function validateFieldAnswer(field: EligibilityField, rawAnswer: string): FieldValidationResult {
+  const answer = rawAnswer.trim();
+
+  if (!isMeaningfulAnswer(answer)) {
+    return {
+      ok: false,
+      clarification: `I need this information to continue eligibility verification. ${field.question}`,
+    };
+  }
+
+  switch (field.key) {
+    case 'gender': {
+      if (/\b(male|female|other|transgender|prefer\s*not\s*to\s*say)\b/i.test(answer)) {
+        return { ok: true, normalizedValue: answer };
+      }
+      return {
+        ok: false,
+        clarification:
+          'Please share your gender (for example: Male, Female, Other, or Prefer not to say).',
+      };
+    }
+
+    case 'age': {
+      const ageMatch = answer.match(/\b(\d{1,3})\b/);
+      if (!ageMatch) {
+        return {
+          ok: false,
+          clarification: 'Please provide your age in years (for example: 19).',
+        };
+      }
+      const age = Number(ageMatch[1]);
+      if (!Number.isFinite(age) || age < 0 || age > 120) {
+        return {
+          ok: false,
+          clarification: 'Please provide a valid age in years between 0 and 120.',
+        };
+      }
+      return { ok: true, normalizedValue: String(age) };
+    }
+
+    case 'state': {
+      const compact = answer.toLowerCase().replace(/\./g, '').trim();
+      const expandedState = STATE_ABBREVIATIONS[compact];
+      if (expandedState) {
+        return {
+          ok: false,
+          confirmationPrompt: `I understood "${answer}" as ${expandedState}. Please confirm if that is correct (yes/no).`,
+          confirmationValue: expandedState,
+        };
+      }
+      if (answer.length < 2) {
+        return {
+          ok: false,
+          clarification: 'Please provide your full state name.',
+        };
+      }
+      return { ok: true, normalizedValue: answer };
+    }
+
+    case 'district': {
+      if (answer.length < 2) {
+        return {
+          ok: false,
+          clarification: 'Please provide your district name.',
+        };
+      }
+      return { ok: true, normalizedValue: answer };
+    }
+
+    case 'residence': {
+      if (/\b(rural|village)\b/i.test(answer)) {
+        return { ok: true, normalizedValue: 'Rural' };
+      }
+      if (/\b(urban|city|town)\b/i.test(answer)) {
+        return { ok: true, normalizedValue: 'Urban' };
+      }
+      return {
+        ok: false,
+        clarification: 'Please specify either Urban or Rural residence.',
+      };
+    }
+
+    case 'category': {
+      if (/\b(obc)\b/i.test(answer)) {
+        return { ok: true, normalizedValue: 'OBC' };
+      }
+      if (/\b(sc)\b/i.test(answer)) {
+        return { ok: true, normalizedValue: 'SC' };
+      }
+      if (/\b(st)\b/i.test(answer)) {
+        return { ok: true, normalizedValue: 'ST' };
+      }
+      if (/\b(general)\b/i.test(answer)) {
+        return { ok: true, normalizedValue: 'General' };
+      }
+      return {
+        ok: false,
+        clarification: 'Please specify your social category as General, OBC, SC, or ST.',
+      };
+    }
+
+    case 'monthlyIncome': {
+      const numberMatch = answer.replace(/,/g, '').match(/\b(\d+(?:\.\d+)?)\b/);
+      if (!numberMatch) {
+        return {
+          ok: false,
+          clarification:
+            'Please provide your monthly household income in rupees (for example: 15000).',
+        };
+      }
+      return { ok: true, normalizedValue: answer };
+    }
+
+    case 'maritalStatus': {
+      if (/\b(unmarried|single)\b/i.test(answer)) {
+        return { ok: true, normalizedValue: 'Unmarried' };
+      }
+      if (/\b(married)\b/i.test(answer)) {
+        return { ok: true, normalizedValue: 'Married' };
+      }
+      if (/\b(divorced)\b/i.test(answer)) {
+        return { ok: true, normalizedValue: 'Divorced' };
+      }
+      if (/\b(widowed)\b/i.test(answer)) {
+        return { ok: true, normalizedValue: 'Widowed' };
+      }
+      return {
+        ok: false,
+        clarification: 'Please provide marital status as Unmarried, Married, Divorced, or Widowed.',
+      };
+    }
+
+    case 'studentStatus':
+    case 'employmentStatus':
+    case 'entrepreneurStatus':
+    case 'farmerStatus':
+    case 'landOwnership':
+    case 'disabilityStatus':
+    case 'minorityStatus':
+    case 'bplStatus':
+    case 'seniorCitizenStatus': {
+      const normalized = normalizeBasicYesNoField(answer);
+      if (normalized) {
+        return { ok: true, normalizedValue: normalized };
+      }
+
+      // Allow explicit, descriptive answers for occupation/employment-like fields
+      if (field.key === 'employmentStatus' && answer.length >= 2) {
+        return { ok: true, normalizedValue: answer };
+      }
+
+      if (field.key === 'landOwnership' && answer.length >= 2) {
+        return { ok: true, normalizedValue: answer };
+      }
+
+      return {
+        ok: false,
+        clarification: `Please answer with Yes or No for this field. ${field.question}`,
+      };
+    }
+
+    case 'occupation':
+    case 'education': {
+      if (answer.length < 2) {
+        return {
+          ok: false,
+          clarification: `Please provide a clear answer. ${field.question}`,
+        };
+      }
+      return { ok: true, normalizedValue: answer };
+    }
+
+    default:
+      return { ok: true, normalizedValue: answer };
+  }
+}
+
+function buildProfileSummary(profile: Partial<Record<EligibilityFieldKey, string>>): string {
+  const lines = ELIGIBILITY_FIELDS.map((field) => {
+    const value = profile[field.key];
+    return `${field.label}: ${value || 'Not Provided'}`;
+  });
+  return lines.join('\n');
+}
+
+function enforceApplyLinksAndTone(
+  text: string,
+  profile: Partial<Record<EligibilityFieldKey, string>>
+): string {
+  let output = text
+    .replace(/not\s+verified/gi, 'official portal provided below')
+    .replace(/verification\s+needed/gi, 'official application guidance provided below')
+    .replace(/please\s+verify\s+from\s+official\s+website/gi, 'Use the official application links below');
+
+  const hasAnyUrl = /https?:\/\//i.test(output);
+  if (hasAnyUrl) {
+    return output;
+  }
+
+  const stateValue = (profile.state || '').toLowerCase();
+  const statePortal = stateValue.includes('andhra')
+    ? 'https://gsws.ap.gov.in/'
+    : 'https://www.india.gov.in/state-and-ut-governments';
+
+  output +=
+    '\n\nOfficial Apply Links:\n' +
+    '- MyScheme (Central & State schemes): https://www.myscheme.gov.in/\n' +
+    '- National Scholarship Portal: https://scholarships.gov.in/\n' +
+    `- State Government Services Portal: ${statePortal}\n` +
+    '- India Government Services Directory: https://www.india.gov.in/';
+
+  return output;
+}
+
+async function generateSchemeRecommendations(
+  profile: Partial<Record<EligibilityFieldKey, string>>
+): Promise<string> {
+  const schemePrompt = `You are BUAIP Government Scheme Analyst.
+
+Use only the provided citizen profile. Do NOT invent any profile values.
+
+Citizen Profile:
+${buildProfileSummary(profile)}
+
+Task:
+1. Recommend relevant central and state (especially Andhra Pradesh if applicable) schemes.
+2. Include only schemes that plausibly match the provided profile.
+3. Keep response structured and citizen-friendly.
+4. Provide direct and actionable application guidance.
+
+For each scheme include:
+- Scheme Name
+- Ministry/Department
+- Key Benefits
+- Eligibility Criteria
+- Why the citizen qualifies (based only on provided profile)
+- Required Documents
+- How to Apply
+- Official Website Link (must be a full https URL)
+
+Important:
+- Do NOT use phrases like "not verified" or "verification needed".
+- Always include an official apply link for every scheme.
+- If exact scheme page is unavailable, provide the official portal URL where citizen can apply.
+- Allowed official portals include:
+  - https://www.myscheme.gov.in/
+  - https://scholarships.gov.in/
+  - https://www.india.gov.in/
+  - State official service portal (e.g., Andhra Pradesh: https://gsws.ap.gov.in/)
+`;
+
+  const response = await callBedrock(schemePrompt, {
+    maxTokens: 2200,
+    temperature: 0.2,
+  });
+
+  return enforceApplyLinksAndTone(response.trim(), profile);
+}
+
+async function generateGeneralResponse(userMessage: string): Promise<string> {
+  const prompt = `You are BUAIP, an AI assistant for Indian public services.
+
+Capabilities:
+- Government schemes
+- Agriculture advisory
+- Legal guidance (general information only)
+- Entrepreneurship guidance
+- Export guidance
+- Travel guidance
+
+Respond clearly and conversationally.
+
+User message: "${userMessage}"
+`;
+
+  const response = await callBedrock(prompt, {
+    maxTokens: 1000,
+    temperature: 0.4,
+  });
+
+  return response.trim();
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body: UnifiedAIRequest = await request.json();
+    const { userMessage, sessionId } = body;
+
+    if (!userMessage || !userMessage.trim()) {
+      return NextResponse.json(
+        { error: 'User message is required' },
+        { status: 400 }
+      );
+    }
+
+    purgeExpiredSessions();
+
+    const normalizedSessionId = (sessionId || 'anonymous').trim() || 'anonymous';
+    const session = getOrCreateSession(normalizedSessionId);
+    const trimmedMessage = userMessage.trim();
+
+    if (isResetIntent(trimmedMessage)) {
+      startSchemeEligibilityFlow(session);
+      const firstField = getCurrentField(session);
+
+      return NextResponse.json({
+        response: `Eligibility profile has been reset. ${firstField?.question}`,
+        success: true,
+      });
+    }
+
+    if (session.pendingConfirmation) {
+      const yesNo = parseYesNo(trimmedMessage);
+      if (!yesNo) {
+        return NextResponse.json({
+          response: `${session.pendingConfirmation.prompt}`,
+          success: true,
+        });
+      }
+
+      if (yesNo === 'yes') {
+        const currentField = getCurrentField(session);
+        if (!currentField || currentField.key !== session.pendingConfirmation.field) {
+          startSchemeEligibilityFlow(session);
+          const firstField = getCurrentField(session);
+          return NextResponse.json({
+            response: `Let's restart the eligibility verification. ${firstField?.question}`,
+            success: true,
+          });
+        }
+
+        session.profile[currentField.key] = session.pendingConfirmation.normalizedValue;
+        session.pendingConfirmation = undefined;
+        session.currentFieldIndex += 1;
+        advanceToNextUnfilledField(session);
+
+        const nextField = getCurrentField(session);
+        if (nextField) {
+          return NextResponse.json({
+            response: `Thank you for confirming. ${nextField.question}`,
+            success: true,
+          });
+        }
+
+        const recommendations = await generateSchemeRecommendations(session.profile);
+        session.mode = 'idle';
+        session.currentFieldIndex = 0;
+        session.pendingConfirmation = undefined;
+
+        return NextResponse.json({
+          response: `Thank you. Your eligibility profile is complete. Based on your provided details, here are the schemes you may qualify for:\n\n${recommendations}`,
+          success: true,
+        });
+      }
+
+      session.pendingConfirmation = undefined;
+      const field = getCurrentField(session);
+      return NextResponse.json({
+        response: `Thanks for clarifying. ${field?.question || 'Please provide the required information.'}`,
+        success: true,
+      });
+    }
+
+    if (session.mode === 'scheme') {
+      advanceToNextUnfilledField(session);
+      const currentField = getCurrentField(session);
+
+      if (!currentField) {
+        const recommendations = await generateSchemeRecommendations(session.profile);
+        session.mode = 'idle';
+        session.currentFieldIndex = 0;
+
+        return NextResponse.json({
+          response: `Thank you. Your eligibility profile is complete. Based on your provided details, here are the schemes you may qualify for:\n\n${recommendations}`,
+          success: true,
+        });
+      }
+
+      const validation = validateFieldAnswer(currentField, trimmedMessage);
+      if (validation.confirmationPrompt && validation.confirmationValue) {
+        session.pendingConfirmation = {
+          field: currentField.key,
+          normalizedValue: validation.confirmationValue,
+          prompt: validation.confirmationPrompt,
+        };
+        return NextResponse.json({
+          response: validation.confirmationPrompt,
+          success: true,
+        });
+      }
+
+      if (!validation.ok || !validation.normalizedValue) {
+        return NextResponse.json({
+          response: validation.clarification || `I need this information to continue. ${currentField.question}`,
+          success: true,
+        });
+      }
+
+      session.profile[currentField.key] = validation.normalizedValue;
+      session.currentFieldIndex += 1;
+      advanceToNextUnfilledField(session);
+
+      const nextField = getCurrentField(session);
+      if (!nextField) {
+        const recommendations = await generateSchemeRecommendations(session.profile);
+        session.mode = 'idle';
+        session.currentFieldIndex = 0;
+
+        return NextResponse.json({
+          response: `Thank you for patiently answering all verification questions. Based on your provided details, here are the schemes you may qualify for:\n\n${recommendations}`,
+          success: true,
+        });
+      }
+
+      return NextResponse.json({
+        response: `Thank you. ${nextField.question}`,
+        success: true,
+      });
+    }
+
+    if (isSchemeIntent(trimmedMessage)) {
+      startSchemeEligibilityFlow(session);
+      const firstField = getCurrentField(session);
+      return NextResponse.json({
+        response: `Sure, I can help you with scheme eligibility. I will ask one question at a time and will not assume any missing details. ${firstField?.question}`,
+        success: true,
+      });
+    }
+
+    if (isGreeting(trimmedMessage)) {
+      return NextResponse.json({
+        response:
+          "Hello! I'm BUAIP, your AI assistant for government schemes and public services. How can I help you today?",
+        success: true,
+      });
+    }
+
+    const response = await generateGeneralResponse(trimmedMessage);
+
+    return NextResponse.json({
+      response,
+      success: true,
+    });
+  } catch (error) {
+    console.error('Error in unified AI:', error);
+    return NextResponse.json(
+      {
+        error: 'Failed to process your request. Please try again.',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
+  }
+}
