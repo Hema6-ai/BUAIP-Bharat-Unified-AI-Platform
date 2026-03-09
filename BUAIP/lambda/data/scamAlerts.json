@@ -1,0 +1,231 @@
+[
+  {
+    "city": "Delhi",
+    "scams": [
+      {
+        "type": "Taxi Meter Scam",
+        "description": "Taxi drivers claim meter is broken and quote 5-10x normal fare",
+        "howToAvoid": "Use Uber/Ola or prepaid taxi booth at airport. If meter is 'broken', get out and find another taxi.",
+        "fairPrice": "Airport to city center: ₹400-600 by prepaid, ₹300-400 by Uber/Ola"
+      },
+      {
+        "type": "Fake Tour Guide",
+        "description": "People approach you near monuments claiming to be official guides",
+        "howToAvoid": "Only hire guides wearing official badges from Archaeological Survey of India. Better yet, use audio guides or read online.",
+        "fairPrice": "Official guides: ₹500-1000 for 2 hours"
+      },
+      {
+        "type": "Commission Shop Scam",
+        "description": "Driver takes you to 'government approved' shops and gets 40% commission",
+        "howToAvoid": "Never go to shops recommended by drivers. Research shops online first. Government doesn't certify private shops.",
+        "fairPrice": "N/A - just avoid"
+      },
+      {
+        "type": "Closed Monument Scam",
+        "description": "Touts tell you monument is closed and offer alternative tour",
+        "howToAvoid": "Verify on official website or call monument directly. Most scammers say this on days monuments are actually open.",
+        "fairPrice": "N/A"
+      }
+    ]
+  },
+  {
+    "city": "Agra",
+    "scams": [
+      {
+        "type": "Taj Mahal Ticket Tout",
+        "description": "Touts sell tickets at inflated prices or fake tickets",
+        "howToAvoid": "Buy tickets only at official ASI counter or online at https://asi.payumoney.com",
+        "fairPrice": "Foreigners: ₹1100 (includes Agra Fort). Indians: ₹50"
+      },
+      {
+        "type": "Fake Marble Scam",
+        "description": "Shops claim to sell 'same marble as Taj Mahal' - usually low quality or fake",
+        "howToAvoid": "Don't buy marble products unless you're an expert. Most are overpriced and not authentic.",
+        "fairPrice": "N/A - not recommended"
+      },
+      {
+        "type": "Photo Scam",
+        "description": "Someone offers to take your photo then demands money",
+        "howToAvoid": "Politely decline photo offers. Use selfie stick or ask another tourist.",
+        "fairPrice": "N/A"
+      }
+    ]
+  },
+  {
+    "city": "Jaipur",
+    "scams": [
+      {
+        "type": "Gem Export Scam",
+        "description": "Shop owners claim you can buy gems cheap and resell in your country for profit. They may ship fake gems or nothing at all.",
+        "howToAvoid": "Never fall for 'export business' schemes. If it sounds too good to be true, it is.",
+        "fairPrice": "N/A - complete scam"
+      },
+      {
+        "type": "Fake Guide at Amber Fort",
+        "description": "Unauthorized guides charge excessive fees and give incorrect information",
+        "howToAvoid": "Hire guides at official counter or use audio guide. Negotiate price upfront.",
+        "fairPrice": "Official guide: ₹600-800 for small group"
+      },
+      {
+        "type": "Restaurant Commission",
+        "description": "Auto drivers get 30-40% commission from certain restaurants",
+        "howToAvoid": "Choose your own restaurant. Walk away if driver insists on specific place.",
+        "fairPrice": "N/A"
+      }
+    ]
+  },
+  {
+    "city": "Mumbai",
+    "scams": [
+      {
+        "type": "Prepaid Taxi Scam",
+        "description": "Driver claims you need to pay toll/parking in addition to prepaid ticket",
+        "howToAvoid": "Prepaid ticket includes all charges. Don't pay anything extra except small tip if you want.",
+        "fairPrice": "Airport prepaid to South Mumbai: ₹600-850"
+      },
+      {
+        "type": "Auto Rickshaw Refusal",
+        "description": "Auto drivers refuse to go by meter, quote high flat rates",
+        "howToAvoid": "Insist on meter or use Uber/Ola. It's illegal to refuse meter. You can complain: 1800-2674774",
+        "fairPrice": "Base fare: ₹23, then ₹17.43 per km"
+      },
+      {
+        "type": "Colaba Causeway Bargaining",
+        "description": "Shop starts at 10x reasonable price",
+        "howToAvoid": "Start bargaining at 30-40% of quoted price. Walk away if they won't budge.",
+        "fairPrice": "Expect to pay 40-50% of initial asking price"
+      }
+    ]
+  },
+  {
+    "city": "Goa",
+    "scams": [
+      {
+        "type": "Taxi Cartel",
+        "description": "Goa taxis have fixed high prices and refuse to negotiate",
+        "howToAvoid": "Rent a scooter (₹300-500/day) or use GoaMiles app. Uber/Ola are limited.",
+        "fairPrice": "Taxi Dabolim Airport to North Goa: ₹1200-1500 (very expensive)"
+      },
+      {
+        "type": "Water Sports Pricing",
+        "description": "No clear menu, final bill is much higher than discussed",
+        "howToAvoid": "Get itemized written quote before starting. Clarify all inclusions.",
+        "fairPrice": "Parasailing: ₹500-800, Jet Ski: ₹800-1200 (10 min)"
+      },
+      {
+        "type": "Drug Trap",
+        "description": "Dealer sells drugs then tips off police for bribe",
+        "howToAvoid": "Just say no. Goa has strict drug laws. This is a common scam.",
+        "fairPrice": "N/A - avoid entirely"
+      }
+    ]
+  },
+  {
+    "city": "Varanasi",
+    "scams": [
+      {
+        "type": "Boat Ride Overcharge",
+        "description": "Boatmen quote ₹1500-2000 for sunrise boat ride",
+        "howToAvoid": "Walk to Assi Ghat, negotiate with multiple boatmen. Book through hotel if possible.",
+        "fairPrice": "₹400-600 for 1-hour ride (small boat, 2-4 people)"
+      },
+      {
+        "type": "Silk Shop Commission",
+        "description": "Driver/guide gets huge commission from silk shops",
+        "howToAvoid": "If buying silk, research shops online first. Don't trust driver recommendations.",
+        "fairPrice": "Varies - research first"
+      },
+      {
+        "type": "Fake Priest Blessings",
+        "description": "Asks for 'suggested donation' of ₹5000-10000",
+        "howToAvoid": "Politely decline blessings at ghats. If you want blessing, donate what you wish (₹50-100 is plenty).",
+        "fairPrice": "₹50-100 if you choose to donate"
+      }
+    ]
+  },
+  {
+    "city": "Rishikesh",
+    "scams": [
+      {
+        "type": "Yoga Course Quality",
+        "description": "Some courses have unqualified teachers and poor facilities despite high prices",
+        "howToAvoid": "Research courses thoroughly online (reviews). Visit school before paying full amount.",
+        "fairPrice": "Varies - ₹300-1000/day for quality course with accommodation"
+      },
+      {
+        "type": "River Rafting Pricing",
+        "description": "Some operators don't include transport or photo CD in quoted price",
+        "howToAvoid": "Clarify what's included: equipment, transport, photos, insurance. Get written confirmation.",
+        "fairPrice": "₹500-1000 for 16km stretch (all inclusive)"
+      }
+    ]
+  },
+  {
+    "city": "Kerala",
+    "scams": [
+      {
+        "type": "Houseboat Price Variations",
+        "description": "Final bill includes 'additional charges' not discussed",
+        "howToAvoid": "Book through reputable operator. Get detailed written itinerary with all-inclusive price.",
+        "fairPrice": "₹8000-15000 per night for 2-person boat (all meals, AC/non-AC)"
+      },
+      {
+        "type": "Fake Ayurveda Centers",
+        "description": "Unqualified practitioners, poor quality treatments",
+        "howToAvoid": "Visit only government-approved centers or reputable resorts. Check certifications.",
+        "fairPrice": "Massage: ₹1500-3000 at quality center"
+      }
+    ]
+  },
+  {
+    "city": "Udaipur",
+    "scams": [
+      {
+        "type": "Painting Shop Commission",
+        "description": "Driver takes you to overpriced miniature painting shops",
+        "howToAvoid": "Choose shops yourself. Old City has many good shops - compare prices.",
+        "fairPrice": "Small painting: ₹500-2000, Larger: ₹5000+ (negotiate)"
+      },
+      {
+        "type": "Lake Pichola Boat Overcharge",
+        "description": "Private boat owners quote ₹2000-3000",
+        "howToAvoid": "Use official boat from City Palace jetty. Fixed rates, better boats.",
+        "fairPrice": "₹400-500 per person for 1-hour sunset cruise (official boat)"
+      }
+    ]
+  },
+  {
+    "city": "Leh",
+    "scams": [
+      {
+        "type": "Tour Package Quality",
+        "description": "Cheap packages have poor vehicles, inexperienced drivers, bad hotels",
+        "howToAvoid": "Don't choose cheapest option. Research operator reviews. Roads are dangerous - need good driver.",
+        "fairPrice": "6-7 day package: ₹35,000-50,000 per person (quality operator, includes permits)"
+      },
+      {
+        "type": "Altitude Medicine Pricing",
+        "description": "Pharmacy may overcharge tourists for Diamox",
+        "howToAvoid": "Buy Diamox before arriving in Leh. Generic acetazolamide is cheap.",
+        "fairPrice": "₹20-50 for pack of 10 tablets (generic)"
+      }
+    ]
+  },
+  {
+    "city": "Bangalore",
+    "scams": [
+      {
+        "type": "Auto Meter Manipulation",
+        "description": "Rigged meters run faster than actual distance",
+        "howToAvoid": "Use Uber/Ola/Rapido. If auto, check if meter looks old/damaged. Insist on meter.",
+        "fairPrice": "₹30 base + ₹15/km after 2km"
+      },
+      {
+        "type": "Nandi Hills Tour Scam",
+        "description": "Taxi drivers quote ₹3000-4000 for half-day trip",
+        "howToAvoid": "Book through Ola Outstation or rent self-drive car. Negotiate hard.",
+        "fairPrice": "₹1500-2000 for half-day to Nandi Hills (60km each way)"
+      }
+    ]
+  }
+]

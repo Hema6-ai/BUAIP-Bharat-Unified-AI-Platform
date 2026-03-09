@@ -1,0 +1,306 @@
+{
+  "platforms": [
+    {
+      "platform": "Amazon.in",
+      "launch_year": 2013,
+      "market_position": "Leader",
+      "gmv_2025": "$23 billion",
+      "commission_structure": {
+        "electronics": {"rate": "6-12%", "closing_fee": "₹10-50"},
+        "fashion": {"rate": "12-20%", "closing_fee": "₹20-40"},
+        "home_kitchen": {"rate": "10-15%", "closing_fee": "₹15-35"},
+        "books": {"rate": "15%", "closing_fee": "₹5-20"},
+        "beauty": {"rate": "10-15%", "closing_fee": "₹15-30"},
+        "grocery": {"rate": "5-10%", "closing_fee": "₹10-25"}
+      },
+      "fulfillment_options": ["FBA (Fulfilled by Amazon)", "Seller Fulfilled Prime", "Easy Ship", "Self Ship"],
+      "fba_fees": {
+        "storage": "₹10-45 per cubic foot per month",
+        "fulfillment": "₹22-120 per unit (size based)",
+        "long_term_storage": "₹100/cubic foot after 180 days"
+      },
+      "demographics": {
+        "primary_audience": "Urban middle class, professionals, 25-45 age",
+        "tier1_cities": "55%",
+        "tier2_cities": "30%",
+        "tier3_plus": "15%",
+        "gender_split": "60% male, 40% female",
+        "payment_preference": "45% COD, 55% prepaid"
+      },
+      "category_demand": {
+        "top_categories": ["Electronics", "Fashion", "Home & Kitchen", "Books", "Beauty"],
+        "fastest_growing": ["Groceries", "Premium electronics", "Smart home devices"],
+        "seasonal_spikes": ["Diwali (Oct-Nov)", "Prime Day (Jul-Aug)", "Great Indian Festival"]
+      },
+      "seller_requirements": {
+        "registration": "GST, PAN, Bank account",
+        "minimum_documentation": "Business proof or individual KYC",
+        "listing_fee": "Free",
+        "subscription": "Free (Individual) or ₹999/month (Professional - waived if >40 orders)"
+      },
+      "advantages": [
+        "Largest customer base in India",
+        "Best logistics (FBA)",
+        "Strong brand trust",
+        "Global seller program (export to US/EU)",
+        "Advanced advertising tools"
+      ],
+      "disadvantages": [
+        "Strict account health metrics",
+        "High competition",
+        "Frequent policy changes",
+        "Longer payment cycles (7-14 days)",
+        "Advertising cost increasing (CPC ₹5-30)"
+      ],
+      "best_for": ["Electronics", "Books", "Premium products", "International sellers", "High-volume brands"]
+    },
+    {
+      "platform": "Flipkart",
+      "launch_year": 2007,
+      "market_position": "Strong #2",
+      "gmv_2025": "$18 billion",
+      "commission_structure": {
+        "electronics": {"rate": "5-11%", "closing_fee": "₹10-45"},
+        "fashion": {"rate": "10-18%", "closing_fee": "₹20-35"},
+        "home_kitchen": {"rate": "8-14%", "closing_fee": "₹15-30"},
+        "books": {"rate": "12-15%", "closing_fee": "₹5-15"},
+        "beauty": {"rate": "9-14%", "closing_fee": "₹15-25"},
+        "grocery": {"rate": "4-9%", "closing_fee": "₹10-20"}
+      },
+      "fulfillment_options": ["F-Assured (Flipkart fulfillment)", "Self Ship"],
+      "f_assured_fees": {
+        "storage": "₹8-40 per cubic foot per month",
+        "fulfillment": "₹20-110 per unit",
+        "pick_and_pack": "₹10-30 per unit"
+      },
+      "demographics": {
+        "primary_audience": "Value-conscious shoppers, 20-40 age, Tier 2/3 strong",
+        "tier1_cities": "45%",
+        "tier2_cities": "35%",
+        "tier3_plus": "20%",
+        "gender_split": "65% male, 35% female",
+        "payment_preference": "55% COD, 45% prepaid"
+      },
+      "category_demand": {
+        "top_categories": ["Fashion", "Electronics", "Home", "Mobiles", "Appliances"],
+        "fastest_growing": ["Groceries (via Flipkart Grocery)", "Furniture", "Sporting goods"],
+        "seasonal_spikes": ["Big Billion Days (Sep-Oct)", "Diwali", "Republic Day Sale"]
+      },
+      "seller_requirements": {
+        "registration": "GST, PAN, Bank account, Business proof",
+        "minimum_documentation": "More stringent than Amazon (business entity required)",
+        "listing_fee": "Free",
+        "subscription": "Free"
+      },
+      "advantages": [
+        "Lower commission than Amazon (by 1-2%)",
+        "Strong in fashion and mobiles",
+        "Faster onboarding",
+        "Better Tier 2/3 penetration",
+        "Easier account management"
+      ],
+      "disadvantages": [
+        "Smaller customer base than Amazon",
+        "Heavy Walmart influence (policy changes)",
+        "Lower international visibility",
+        "Limited advertising options vs Amazon",
+        "F-Assured availability limited in some cities"
+      ],
+      "best_for": ["Fashion", "Mobiles", "Appliances", "Budget products", "Tier 2/3 focus"]
+    },
+    {
+      "platform": "Meesho",
+      "launch_year": 2015,
+      "market_position": "Rising (Tier 2/3 leader)",
+      "gmv_2025": "$7 billion",
+      "commission_structure": {
+        "fashion": {"rate": "8-15%", "closing_fee": "₹0"},
+        "home_decor": {"rate": "8-12%", "closing_fee": "₹0"},
+        "beauty": {"rate": "10-14%", "closing_fee": "₹0"},
+        "electronics": {"rate": "5-10%", "closing_fee": "₹0"},
+        "general": {"rate": "8-15%", "closing_fee": "₹0"}
+      },
+      "fulfillment_options": ["Meesho Mall (fulfillment)", "Self Ship"],
+      "meesho_mall_fees": {
+        "storage": "₹5-30 per cubic foot per month",
+        "fulfillment": "₹15-90 per unit",
+        "return_charges": "₹20-50 per return"
+      },
+      "demographics": {
+        "primary_audience": "Budget-conscious, women-led purchases, Tier 2/3/4 cities",
+        "tier1_cities": "25%",
+        "tier2_cities": "40%",
+        "tier3_plus": "35%",
+        "gender_split": "70% female, 30% male",
+        "payment_preference": "80% COD, 20% prepaid"
+      },
+      "category_demand": {
+        "top_categories": ["Fashion (women)", "Home decor", "Beauty", "Accessories", "Footwear"],
+        "fastest_growing": ["Men's fashion", "Electronics", "Home appliances"],
+        "seasonal_spikes": ["Mega Blockbuster Sale", "Festival sales", "Weekly flash deals"]
+      },
+      "seller_requirements": {
+        "registration": "PAN, Bank account (GST optional for small sellers)",
+        "minimum_documentation": "Very low barrier (individual sellers allowed)",
+        "listing_fee": "Free",
+        "subscription": "Free"
+      },
+      "advantages": [
+        "Zero commission until sale (lowest cost)",
+        "Huge Tier 2/3 reach",
+        "No GST mandate for small sellers",
+        "Very low entry barrier",
+        "Strong reseller ecosystem"
+      ],
+      "disadvantages": [
+        "High return rates (20-30%)",
+        "Quality perception issues",
+        "Limited premium product market",
+        "Weaker brand trust vs Amazon/Flipkart",
+        "Payment cycles longer (10-15 days)"
+      ],
+      "best_for": ["Budget fashion", "Unbranded goods", "Tier 3/4 targeting", "New sellers testing market", "Resellers"]
+    },
+    {
+      "platform": "JioMart",
+      "launch_year": 2020,
+      "market_position": "Emerging (backed by Reliance)",
+      "gmv_2025": "$3 billion",
+      "commission_structure": {
+        "groceries": {"rate": "2-6%", "closing_fee": "₹0"},
+        "fashion": {"rate": "8-14%", "closing_fee": "₹0"},
+        "electronics": {"rate": "4-10%", "closing_fee": "₹0"},
+        "home": {"rate": "6-12%", "closing_fee": "₹0"}
+      },
+      "fulfillment_options": ["JioMart Fulfillment", "Direct from Reliance Retail stores", "Third-party"],
+      "fulfillment_fees": {
+        "storage": "₹6-35 per cubic foot per month",
+        "fulfillment": "₹18-100 per unit",
+        "hyperlocal_delivery": "₹5-20 (within 10 km)"
+      },
+      "demographics": {
+        "primary_audience": "Middle-class families, grocery-focused, Jio ecosystem users",
+        "tier1_cities": "50%",
+        "tier2_cities": "30%",
+        "tier3_plus": "20%",
+        "gender_split": "50% male, 50% female",
+        "payment_preference": "60% COD, 40% prepaid (JioMoney push)"
+      },
+      "category_demand": {
+        "top_categories": ["Groceries", "FMCG", "Fashion", "Electronics", "Home"],
+        "fastest_growing": ["Fresh produce", "Private labels", "Premium groceries"],
+        "seasonal_spikes": ["Online festivals", "Weekly mega deals", "JioMart Days"]
+      },
+      "seller_requirements": {
+        "registration": "GST, PAN, Bank account",
+        "minimum_documentation": "Similar to Flipkart",
+        "listing_fee": "Free",
+        "subscription": "Free (promotional phase)"
+      },
+      "advantages": [
+        "Jio ecosystem (300M+ users)",
+        "Strong grocery logistics (Reliance Retail network)",
+        "Hyperlocal delivery (store-to-home)",
+        "Low commission",
+        "Growing fast with aggressive investment"
+      ],
+      "disadvantages": [
+        "Still building seller base",
+        "Limited non-grocery traction",
+        "Platform maturity lower than Amazon/Flipkart",
+        "Less international reach",
+        "Seller support still developing"
+      ],
+      "best_for": ["FMCG brands", "Groceries", "Hyperlocal sellers", "Reliance partnerships", "Future bets"]
+    },
+    {
+      "platform": "Snapdeal",
+      "launch_year": 2010,
+      "market_position": "Declining (niche player)",
+      "gmv_2025": "$1.5 billion",
+      "commission_structure": {
+        "fashion": {"rate": "8-15%", "closing_fee": "₹15-30"},
+        "electronics": {"rate": "5-12%", "closing_fee": "₹10-40"},
+        "home": {"rate": "8-14%", "closing_fee": "₹15-30"},
+        "general": {"rate": "6-15%", "closing_fee": "₹10-35"}
+      },
+      "fulfillment_options": ["Self Ship only"],
+      "fulfillment_fees": "No in-house fulfillment (sellers use own logistics)",
+      "demographics": {
+        "primary_audience": "Value shoppers, older demographic, Tier 2/3",
+        "tier1_cities": "30%",
+        "tier2_cities": "45%",
+        "tier3_plus": "25%",
+        "gender_split": "60% male, 40% female",
+        "payment_preference": "70% COD, 30% prepaid"
+      },
+      "category_demand": {
+        "top_categories": ["Fashion", "Electronics accessories", "Home", "Mobile accessories"],
+        "fastest_growing": "Limited growth momentum",
+        "seasonal_spikes": ["Unbox Diwali Sale", "Republic Day"]
+      },
+      "seller_requirements": {
+        "registration": "GST, PAN, Bank account",
+        "minimum_documentation": "Standard",
+        "listing_fee": "Free",
+        "subscription": "Free"
+      },
+      "advantages": [
+        "Very low competition",
+        "Lower commission than Amazon/Flipkart",
+        "Good for long-tail products",
+        "Fewer policy restrictions"
+      ],
+      "disadvantages": [
+        "Low traffic",
+        "Declining market share",
+        "Limited marketing support",
+        "Perception issues",
+        "Uncertain future"
+      ],
+      "best_for": ["Liquidating inventory", "Low-competition niches", "Testing unproven products"]
+    }
+  ],
+  "platform_comparison": {
+    "by_traffic_monthly": {
+      "Amazon.in": "400M+ visits",
+      "Flipkart": "350M+ visits",
+      "Meesho": "180M+ visits",
+      "JioMart": "80M+ visits",
+      "Snapdeal": "25M+ visits"
+    },
+    "by_seller_count": {
+      "Amazon.in": "1.2M+ sellers",
+      "Flipkart": "800K+ sellers",
+      "Meesho": "1.5M+ sellers",
+      "JioMart": "200K+ sellers",
+      "Snapdeal": "300K+ sellers"
+    },
+    "by_avg_order_value": {
+      "Amazon.in": "₹1,800-2,500",
+      "Flipkart": "₹1,500-2,200",
+      "JioMart": "₹800-1,200",
+      "Meesho": "₹400-800",
+      "Snapdeal": "₹600-1,000"
+    }
+  },
+  "multi_platform_strategy": {
+    "essential_stack": ["Amazon.in", "Flipkart"],
+    "growth_stack": ["Amazon.in", "Flipkart", "Meesho"],
+    "full_coverage": ["Amazon.in", "Flipkart", "Meesho", "JioMart"],
+    "recommendations": [
+      "Start with Amazon.in for brand building",
+      "Add Flipkart for volume",
+      "Use Meesho for Tier 2/3 penetration",
+      "Add JioMart for groceries/FMCG",
+      "Avoid spreading too thin (max 3-4 platforms initially)",
+      "Use inventory management software (Unicommerce, eVanik) for multi-platform sync"
+    ]
+  },
+  "metadata": {
+    "last_updated": "2026-03-08",
+    "data_source": "BUAIP GlobalSeller Intelligence + Platform seller data + Industry reports",
+    "coverage": "Top 5 platforms covering 90%+ India e-commerce GMV",
+    "usage_notes": "Commission rates and demographics are approximate. Always verify current rates on platform seller panels."
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "description": "Sample cache structure for ANNADATA offline mode",
+  "purpose": "Demonstrates S3-compatible local caching for rural connectivity resilience",
+  "aws_mapping": {
+    "current": "local filesystem (public/offline-cache/)",
+    "production": "AWS S3 bucket with regional replication",
+    "adapter_ready": true
+  },
+  "cache_files": {
+    "mandi_prices": "mandi_{state}_{crop}.json",
+    "weather_data": "weather_{state}.json"
+  },
+  "sample_mandi_cache": {
+    "crop": "Rice",
+    "state": "Punjab",
+    "todayPrice": 2100,
+    "weeklyAverage": 2050,
+    "trend": "rising",
+    "lastUpdated": "2026-03-01T08:30:00Z",
+    "source": "live"
+  },
+  "sample_weather_cache": {
+    "state": "Punjab",
+    "summary": "Clear weather forecast. Good time for field operations.",
+    "rainfallRisk": "low",
+    "temperature": 22,
+    "forecast": "Clear weather forecast. Good time for field operations.",
+    "lastUpdated": "2026-03-01T08:30:00Z",
+    "source": "live"
+  },
+  "notes": [
+    "Cache files are auto-generated when live API calls succeed",
+    "Fallback to cached data when network unavailable (village reality)",
+    "Designed for AWS S3 migration with zero code changes",
+    "CloudWatch logs will track cache hit/miss ratios in production"
+  ]
+}

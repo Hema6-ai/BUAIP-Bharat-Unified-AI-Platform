@@ -1,0 +1,903 @@
+[
+  {
+    "city": "Delhi",
+    "hospitals": [
+      {
+        "name": "All India Institute of Medical Sciences (AIIMS)",
+        "type": "government",
+        "address": "Ansari Nagar, New Delhi",
+        "phone": "011-26589123"
+      },
+      {
+        "name": "Apollo Hospital Delhi",
+        "type": "private",
+        "address": "Sarita Vihar, New Delhi",
+        "phone": "011-71720100"
+      },
+      {
+        "name": "Fortis Hospital Vasant Kunj",
+        "type": "private",
+        "address": "Vasant Kunj, New Delhi",
+        "phone": "011-41275000"
+      },
+      {
+        "name": "Ram Manohar Lohia Hospital",
+        "type": "government",
+        "address": "New Delhi",
+        "phone": "011-23365525"
+      }
+    ],
+    "policeStations": [
+      {
+        "name": "Connaught Place Police Station (Tourist Helpline)",
+        "address": "Connaught Place, New Delhi",
+        "phone": "011-23417549"
+      },
+      {
+        "name": "New Delhi Railway Station Police",
+        "address": "New Delhi Railway Station",
+        "phone": "011-23308159"
+      },
+      {
+        "name": "IGI Airport Police Station",
+        "address": "Indira Gandhi International Airport",
+        "phone": "011-25675544"
+      }
+    ],
+    "atms": [
+      {
+        "name": "SBI ATM",
+        "location": "Connaught Place"
+      },
+      {
+        "name": "HDFC ATM",
+        "location": "Raj Path"
+      },
+      {
+        "name": "ICICI ATM",
+        "location": "Khan Market"
+      },
+      {
+        "name": "Axis Bank ATM",
+        "location": "Saket Metro Station"
+      }
+    ],
+    "touristPlaces": [
+      {
+        "name": "India Gate",
+        "area": "Raisina Hill"
+      },
+      {
+        "name": "Red Fort",
+        "area": "Chandni Chowk"
+      },
+      {
+        "name": "Jama Masjid",
+        "area": "Chandni Chowk"
+      },
+      {
+        "name": "Qutub Minar",
+        "area": "Mehrauli"
+      },
+      {
+        "name": "Lotus Temple",
+        "area": "Bahapur"
+      }
+    ],
+    "transport": [
+      {
+        "type": "Delhi Metro",
+        "note": "Fastest option. Download 'Delhi Metro Rail Corporation' app for routes. Single journey: 10-40 rupees"
+      },
+      {
+        "type": "Uber/Ola Cabs",
+        "note": "Requires app registration. Upfront pricing. Accept cards and UPI"
+      },
+      {
+        "type": "Government Buses (DTC/DMRC)",
+        "note": "Very affordable (5-25 rupees). Get route info at bus stands"
+      },
+      {
+        "type": "Prepaid Taxi",
+        "note": "Available at airport and major stations. Book at counter, fixed rates"
+      }
+    ]
+  },
+  {
+    "city": "Mumbai",
+    "hospitals": [
+      {
+        "name": "Lilavati Hospital",
+        "type": "private",
+        "address": "Bandra, Mumbai",
+        "phone": "022-24070000"
+      },
+      {
+        "name": "Apollo Hospital Mumbai",
+        "type": "private",
+        "address": "Navi Mumbai",
+        "phone": "022-40502525"
+      },
+      {
+        "name": "Bombay Hospital",
+        "type": "private",
+        "address": "Marine Lines, Mumbai",
+        "phone": "022-22067676"
+      },
+      {
+        "name": "Sir JJ Hospital",
+        "type": "government",
+        "address": "Fort, Mumbai",
+        "phone": "022-22620600"
+      }
+    ],
+    "policeStations": [
+      {
+        "name": "Mumbai Police Tourism & Assistance Cell",
+        "address": "Bandra East, Mumbai",
+        "phone": "022-26043245"
+      },
+      {
+        "name": "Marine Drive Police Station",
+        "address": "Marine Drive, Mumbai",
+        "phone": "022-22025171"
+      },
+      {
+        "name": "IGI Airport Police (Bombay)",
+        "address": "Mumbai Airport",
+        "phone": "022-28255405"
+      }
+    ],
+    "atms": [
+      {
+        "name": "HDFC ATM",
+        "location": "Gateway of India"
+      },
+      {
+        "name": "SBI ATM",
+        "location": "Colaba Causeway"
+      },
+      {
+        "name": "Axis Bank ATM",
+        "location": "Bandra"
+      },
+      {
+        "name": "ICICI ATM",
+        "location": "Marine Drive"
+      }
+    ],
+    "touristPlaces": [
+      {
+        "name": "Gateway of India",
+        "area": "Colaba"
+      },
+      {
+        "name": "Marine Drive",
+        "area": "Bandra to Colaba"
+      },
+      {
+        "name": "Elephanta Caves",
+        "area": "Island (ferry from Gateway)"
+      },
+      {
+        "name": "Haji Ali Dargah",
+        "area": "Marine Drive"
+      }
+    ],
+    "transport": [
+      {
+        "type": "Mumbai Local Train",
+        "note": "Fastest. Western Line, Central Line, Harbour Line. Single ticket: 5-35 rupees. Can be crowded during rush hours"
+      },
+      {
+        "type": "Uber/Ola",
+        "note": "Reliable in South Mumbai. More expensive than other cities"
+      },
+      {
+        "type": "BEST Buses",
+        "note": "Affordable and air-conditioned variants available. Fares: 5-50 rupees"
+      },
+      {
+        "type": "Auto Rickshaw",
+        "note": "Meter taxis in South Mumbai accept longer distances. Negotiate upfront with non-meter autos"
+      }
+    ]
+  },
+  {
+    "city": "Jaipur",
+    "hospitals": [
+      {
+        "name": "Fortis Hospital Jaipur",
+        "type": "private",
+        "address": "C-Scheme, Jaipur",
+        "phone": "0141-3970000"
+      },
+      {
+        "name": "Apollo Hospital Jaipur",
+        "type": "private",
+        "address": "Tonk Road, Jaipur",
+        "phone": "0141-2290000"
+      },
+      {
+        "name": "Sawai Man Singh Hospital",
+        "type": "government",
+        "address": "Jaipur",
+        "phone": "0141-2568841"
+      }
+    ],
+    "policeStations": [
+      {
+        "name": "Tourist Police (Rajasthan)",
+        "address": "M.I. Road, Jaipur",
+        "phone": "0141-5110598"
+      },
+      {
+        "name": "C Scheme Police Station",
+        "address": "C Scheme, Jaipur",
+        "phone": "0141-2374444"
+      },
+      {
+        "name": "Sanganeri Gate Police Station",
+        "address": "Sanganeri Gate, Jaipur",
+        "phone": "0141-2625551"
+      }
+    ],
+    "atms": [
+      {
+        "name": "SBI ATM",
+        "location": "M.I. Road"
+      },
+      {
+        "name": "HDFC ATM",
+        "location": "Park Avenue, C Scheme"
+      },
+      {
+        "name": "ICICI ATM",
+        "location": "Pink City Market"
+      }
+    ],
+    "touristPlaces": [
+      {
+        "name": "Hawa Mahal",
+        "area": "Pink City"
+      },
+      {
+        "name": "City Palace",
+        "area": "Pink City"
+      },
+      {
+        "name": "Amber Fort",
+        "area": "11 km from city center"
+      },
+      {
+        "name": "Jantar Mantar",
+        "area": "Pink City"
+      }
+    ],
+    "transport": [
+      {
+        "type": "Auto Rickshaw",
+        "note": "Most common. Negotiate price upfront. Average ride: 50-150 rupees"
+      },
+      {
+        "type": "Uber/Ola",
+        "note": "Available in city center. Better for safety"
+      },
+      {
+        "type": "City Bus",
+        "note": "Cheap but crowded. Fares: 5-15 rupees"
+      },
+      {
+        "type": "Rental Bikes",
+        "note": "Popular with tourists. International permit needed. Daily: 400-700 rupees"
+      }
+    ]
+  },
+  {
+    "city": "Agra",
+    "hospitals": [
+      {
+        "name": "Agra Hospital",
+        "type": "government",
+        "address": "Agra",
+        "phone": "0562-2275666"
+      },
+      {
+        "name": "Lifecare Hospital",
+        "type": "private",
+        "address": "Sanjay Place, Agra",
+        "phone": "0562-2530600"
+      }
+    ],
+    "policeStations": [
+      {
+        "name": "Tourist Police Agra",
+        "address": "Taj Ganj, Agra",
+        "phone": "0562-2237128"
+      },
+      {
+        "name": "Sadar Bazaar Police Station",
+        "address": "Sadar Bazaar, Agra",
+        "phone": "0562-2465070"
+      }
+    ],
+    "atms": [
+      {
+        "name": "SBI ATM",
+        "location": "Sadar Bazaar"
+      },
+      {
+        "name": "HDFC ATM",
+        "location": "Taj Ganj"
+      },
+      {
+        "name": "Axis ATM",
+        "location": "Kinari Bazaar"
+      }
+    ],
+    "touristPlaces": [
+      {
+        "name": "Taj Mahal",
+        "area": "Taj Ganj"
+      },
+      {
+        "name": "Agra Fort",
+        "area": "Fort area"
+      },
+      {
+        "name": "Fatehpur Sikri",
+        "area": "35 km from Agra"
+      },
+      {
+        "name": "Mehtab Bagh",
+        "area": "Opposite side of Taj Mahal (sunset views)"
+      }
+    ],
+    "transport": [
+      {
+        "type": "Auto Rickshaw",
+        "note": "Most local transport. Negotiate prices. Average 30-80 rupees"
+      },
+      {
+        "type": "Uber/Ola",
+        "note": "Limited availability. Book in advance"
+      },
+      {
+        "type": "Cycle Rickshaw",
+        "note": "For short distances. Haggle prices (20-50 rupees)"
+      }
+    ]
+  },
+  {
+    "city": "Goa",
+    "hospitals": [
+      {
+        "name": "Goa Medical College",
+        "type": "government",
+        "address": "Bambolim, North Goa",
+        "phone": "0832-2458601"
+      },
+      {
+        "name": "Apollo Hospital Goa",
+        "type": "private",
+        "address": "Baga, Goa",
+        "phone": "0832-6666666"
+      }
+    ],
+    "policeStations": [
+      {
+        "name": "Tourism Police Goa",
+        "address": "Panaji, Goa",
+        "phone": "0832-2227655"
+      },
+      {
+        "name": "Panjim Police Station",
+        "address": "Panaji, Goa",
+        "phone": "0832-2225565"
+      }
+    ],
+    "atms": [
+      {
+        "name": "SBI ATM",
+        "location": "Baga Beach"
+      },
+      {
+        "name": "HDFC ATM",
+        "location": "Calangute Beach"
+      },
+      {
+        "name": "ICICI ATM",
+        "location": "Panaji"
+      }
+    ],
+    "touristPlaces": [
+      {
+        "name": "Baga Beach",
+        "area": "North Goa"
+      },
+      {
+        "name": "Calangute Beach",
+        "area": "North Goa"
+      },
+      {
+        "name": "Palolem Beach",
+        "area": "South Goa"
+      },
+      {
+        "name": "Fort Aguada",
+        "area": "North Goa"
+      }
+    ],
+    "transport": [
+      {
+        "type": "Rented Scooter/Bike",
+        "note": "Most popular. International permit needed. Daily: 300-500 rupees"
+      },
+      {
+        "type": "Taxi Cartel (Fixed Rates)",
+        "note": "Very expensive. Only use if necessary. Pre-negotiate always"
+      },
+      {
+        "type": "Uber/Ola",
+        "note": "Limited but cheaper. Use when available"
+      },
+      {
+        "type": "Government Bus",
+        "note": "Cheap and reliable. Connects towns and beaches"
+      }
+    ]
+  },
+  {
+    "city": "Kerala",
+    "hospitals": [
+      {
+        "name": "Kerala Medical Education and Research Institute (KMEI)",
+        "type": "government",
+        "address": "Kochi",
+        "phone": "0484-2800155"
+      },
+      {
+        "name": "Lakeshore Hospital",
+        "type": "private",
+        "address": "Kochi",
+        "phone": "0484-2399309"
+      },
+      {
+        "name": "Thiruvananthapuram Medical College",
+        "type": "government",
+        "address": "Thiruvananthapuram",
+        "phone": "0471-2551344"
+      }
+    ],
+    "policeStations": [
+      {
+        "name": "Kochi Tourism Police",
+        "address": "Fort Kochi, Kochi",
+        "phone": "0484-2217172"
+      },
+      {
+        "name": "Thiruvananthapuram Police",
+        "address": "Thiruvananthapuram",
+        "phone": "0471-2324567"
+      }
+    ],
+    "atms": [
+      {
+        "name": "SBI ATM",
+        "location": "Fort Kochi"
+      },
+      {
+        "name": "HDFC ATM",
+        "location": "Kochi main area"
+      },
+      {
+        "name": "Federal Bank ATM",
+        "location": "Multiple locations across Kerala"
+      }
+    ],
+    "touristPlaces": [
+      {
+        "name": "Alleppey Backwaters",
+        "area": "Alleppey"
+      },
+      {
+        "name": "Munnar Tea Gardens",
+        "area": "Munnar (trekking, scenic)"
+      },
+      {
+        "name": "Fort Kochi",
+        "area": "Kochi (heritage area)"
+      },
+      {
+        "name": "Periyar Wildlife Sanctuary",
+        "area": "Thekkady"
+      }
+    ],
+    "transport": [
+      {
+        "type": "KSRTC Buses (Kerala State Road Transport)",
+        "note": "Reliable, air-conditioned. Connects all towns. Cheap fares"
+      },
+      {
+        "type": "Houseboat",
+        "note": "For backwater tours. Book through reputable operators only"
+      },
+      {
+        "type": "Auto Rickshaw",
+        "note": "Available in cities. Negotiate prices"
+      },
+      {
+        "type": "Train",
+        "note": "Scenic routes. Book through IRCTC app"
+      }
+    ]
+  },
+  {
+    "city": "Varanasi",
+    "hospitals": [
+      {
+        "name": "IIMS Varanasi",
+        "type": "government",
+        "address": "Benares Hindu University",
+        "phone": "0542-2236666"
+      },
+      {
+        "name": "Shri Satya Sai Medical Hospital",
+        "type": "private",
+        "address": "Varanasi",
+        "phone": "0542-2200200"
+      }
+    ],
+    "policeStations": [
+      {
+        "name": "Varanasi Tourist Police",
+        "address": "Godowlia, Varanasi",
+        "phone": "0542-2506670"
+      },
+      {
+        "name": "Godowlia Police Station",
+        "address": "Godowlia, Varanasi",
+        "phone": "0542-2401123"
+      }
+    ],
+    "atms": [
+      {
+        "name": "SBI ATM",
+        "location": "Godowlia"
+      },
+      {
+        "name": "ICICI ATM",
+        "location": "Assi Ghat"
+      }
+    ],
+    "touristPlaces": [
+      {
+        "name": "Dashashwamedh Ghat",
+        "area": "Main Ghat"
+      },
+      {
+        "name": "Kashi Vishwanath Temple",
+        "area": "Old City"
+      },
+      {
+        "name": "Assi Ghat",
+        "area": "South Varanasi"
+      },
+      {
+        "name": "Sarnath (Buddha's first sermon)",
+        "area": "12 km from Varanasi"
+      }
+    ],
+    "transport": [
+      {
+        "type": "Cycle Rickshaw",
+        "note": "Main mode in old city. Haggle prices (20-80 rupees)"
+      },
+      {
+        "type": "Auto Rickshaw",
+        "note": "For longer distances. Negotiate upfront"
+      },
+      {
+        "type": "Boat (Ganges River)",
+        "note": "For ghat tours. Book through hotels or direct with boatmen"
+      }
+    ]
+  },
+  {
+    "city": "Udaipur",
+    "hospitals": [
+      {
+        "name": "Udaipur Hospital",
+        "type": "government",
+        "address": "Udaipur",
+        "phone": "0294-2411111"
+      },
+      {
+        "name": "Arihant Hospital",
+        "type": "private",
+        "address": "Udaipur",
+        "phone": "0294-2439999"
+      }
+    ],
+    "policeStations": [
+      {
+        "name": "Tourist Police Udaipur",
+        "address": "Udaipur",
+        "phone": "0294-2411535"
+      },
+      {
+        "name": "Sadar Bazaar Police Station",
+        "address": "Udaipur",
+        "phone": "0294-2420122"
+      }
+    ],
+    "atms": [
+      {
+        "name": "SBI ATM",
+        "location": "Hiran Magri"
+      },
+      {
+        "name": "HDFC ATM",
+        "location": "Lake Palace area"
+      }
+    ],
+    "touristPlaces": [
+      {
+        "name": "Lake Pichola",
+        "area": "City center"
+      },
+      {
+        "name": "City Palace",
+        "area": "Lake Pichola"
+      },
+      {
+        "name": "Jag Mandir",
+        "area": "Island in Lake Pichola"
+      },
+      {
+        "name": "Saheliyon Ki Bari",
+        "area": "Near City Palace"
+      }
+    ],
+    "transport": [
+      {
+        "type": "Auto Rickshaw",
+        "note": "Main transport. Negotiate or use Ola/Uber"
+      },
+      {
+        "type": "Uber/Ola",
+        "note": "Available but limited"
+      },
+      {
+        "type": "City Bus",
+        "note": "Cheap and old but functional"
+      },
+      {
+        "type": "Rental Bike",
+        "note": "Great for exploring. 300-400 rupees per day"
+      }
+    ]
+  },
+  {
+    "city": "Leh",
+    "hospitals": [
+      {
+        "name": "Leh Hospital",
+        "type": "government",
+        "address": "Leh",
+        "phone": "01982-253041"
+      },
+      {
+        "name": "Emergency Hospital Leh",
+        "type": "private",
+        "address": "Changspa, Leh",
+        "phone": "01982-254525"
+      }
+    ],
+    "policeStations": [
+      {
+        "name": "Leh Police Station",
+        "address": "Leh",
+        "phone": "01982-252516"
+      },
+      {
+        "name": "Airport Police (IXL)",
+        "address": "Near Kushok Bakula Rimpochee Airport",
+        "phone": "01982-274666"
+      }
+    ],
+    "atms": [
+      {
+        "name": "SBI ATM",
+        "location": "Main Market"
+      },
+      {
+        "name": "Axis Bank ATM",
+        "location": "Changspa"
+      }
+    ],
+    "touristPlaces": [
+      {
+        "name": "Pangong Lake",
+        "area": "120 km from Leh (2-3 hours)"
+      },
+      {
+        "name": "Nubra Valley",
+        "area": "90 km from Leh"
+      },
+      {
+        "name": "Khardung La Pass",
+        "area": "39 km from Leh"
+      },
+      {
+        "name": "Shanti Stupa",
+        "area": "5 km from Leh"
+      }
+    ],
+    "transport": [
+      {
+        "type": "Shared Taxi",
+        "note": "Only reliable option. Book at central taxi stand. Fixed but high rates"
+      },
+      {
+        "type": "Motorcycle/Bike Rental",
+        "note": "International permit required. 600-1000 rupees per day"
+      },
+      {
+        "type": "Private Taxi",
+        "note": "For day trips. Book through hotel"
+      }
+    ]
+  },
+  {
+    "city": "Rishikesh",
+    "hospitals": [
+      {
+        "name": "Rishikesh Hospital",
+        "type": "government",
+        "address": "Rishikesh",
+        "phone": "0135-2430555"
+      },
+      {
+        "name": "Himalayan Institute Hospital",
+        "type": "private",
+        "address": "Rishikesh",
+        "phone": "0135-2241111"
+      }
+    ],
+    "policeStations": [
+      {
+        "name": "Rishikesh Police Station",
+        "address": "Rishikesh",
+        "phone": "0135-2431255"
+      }
+    ],
+    "atms": [
+      {
+        "name": "SBI ATM",
+        "location": "Main Bazaar"
+      },
+      {
+        "name": "ICICI ATM",
+        "location": "Laxman Jhula area"
+      }
+    ],
+    "touristPlaces": [
+      {
+        "name": "Laxman Jhula",
+        "area": "Rishikesh"
+      },
+      {
+        "name": "Ram Jhula",
+        "area": "Rishikesh"
+      },
+      {
+        "name": "Beatles Ashram",
+        "area": "Rishikesh"
+      },
+      {
+        "name": "Triveni Ghat",
+        "area": "Rishikesh"
+      }
+    ],
+    "transport": [
+      {
+        "type": "Auto Rickshaw",
+        "note": "Local transport. Negotiate prices"
+      },
+      {
+        "type": "Shared Taxi",
+        "note": "To nearby towns and attractions"
+      },
+      {
+        "type": "Motorcycle Rental",
+        "note": "Popular. International permit required"
+      }
+    ]
+  },
+  {
+    "city": "Bangalore",
+    "hospitals": [
+      {
+        "name": "Apollo Hospital Bangalore",
+        "type": "private",
+        "address": "Koramangala, Bangalore",
+        "phone": "080-42825000"
+      },
+      {
+        "name": "Fortis Hospital Bangalore",
+        "type": "private",
+        "address": "Bangalore",
+        "phone": "080-41555555"
+      },
+      {
+        "name": "Victoria Hospital",
+        "type": "government",
+        "address": "Fort area, Bangalore",
+        "phone": "080-26706545"
+      }
+    ],
+    "policeStations": [
+      {
+        "name": "Bangalore Police Control Room",
+        "address": "Bangalore",
+        "phone": "080-22941010"
+      },
+      {
+        "name": "Tourist Police Bangalore",
+        "address": "Bangalore",
+        "phone": "080-22379001"
+      }
+    ],
+    "atms": [
+      {
+        "name": "SBI ATM",
+        "location": "MG Road"
+      },
+      {
+        "name": "HDFC ATM",
+        "location": "Koramangala"
+      },
+      {
+        "name": "Axis Bank ATM",
+        "location": "Whitefield"
+      }
+    ],
+    "touristPlaces": [
+      {
+        "name": "Lalbagh Botanical Garden",
+        "area": "Lalbagh"
+      },
+      {
+        "name": "Bangalore Palace",
+        "area": "VV Puram"
+      },
+      {
+        "name": "Cubbon Park",
+        "area": "Central Bangalore"
+      },
+      {
+        "name": "Tipu Sultan's Summer Palace",
+        "area": "Fort area"
+      }
+    ],
+    "transport": [
+      {
+        "type": "Namma Metro",
+        "note": "Fast and reliable metro system. Single journey: 10-60 rupees"
+      },
+      {
+        "type": "Uber/Ola",
+        "note": "Very reliable. Often cheaper than autos"
+      },
+      {
+        "type": "Auto Rickshaw",
+        "note": "Insist on meter. Often overcharge tourists"
+      },
+      {
+        "type": "BMTC Buses",
+        "note": "Extensive network. Cheap. Can be crowded"
+      }
+    ]
+  }
+]

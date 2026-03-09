@@ -1,0 +1,305 @@
+[
+  {
+    "city": "Delhi",
+    "attractions": [
+      "Red Fort",
+      "India Gate",
+      "Qutub Minar",
+      "Humayun's Tomb",
+      "Lotus Temple",
+      "Akshardham Temple",
+      "Jama Masjid",
+      "Chandni Chowk Market"
+    ],
+    "bestSeason": "October to March",
+    "daysRecommended": 2,
+    "travelTips": [
+      "Use Delhi Metro to avoid traffic",
+      "Carry water bottle everywhere",
+      "Avoid street food initially until acclimatized",
+      "Book monuments tickets online in advance",
+      "Dress modestly at religious sites"
+    ],
+    "mustTry": [
+      "Paranthe Wali Gali in Chandni Chowk",
+      "Karim's Mughlai food near Jama Masjid",
+      "Chaat at Bengali Market"
+    ],
+    "nearbyDestinations": ["Agra (3-4 hours)", "Jaipur (5 hours)"]
+  },
+  {
+    "city": "Agra",
+    "attractions": [
+      "Taj Mahal",
+      "Agra Fort",
+      "Fatehpur Sikri",
+      "Mehtab Bagh (sunset view of Taj)",
+      "Itmad-ud-Daulah (Baby Taj)"
+    ],
+    "bestSeason": "October to March",
+    "daysRecommended": 1,
+    "travelTips": [
+      "Visit Taj Mahal at sunrise for best experience",
+      "Taj is closed on Fridays",
+      "Buy tickets online to skip queues",
+      "Avoid marble shops with 'government certified' claims",
+      "Keep minimal belongings (security check at Taj)"
+    ],
+    "mustTry": [
+      "Petha (local sweet)",
+      "Mughlai cuisine at Dasaprakash or Pinch of Spice"
+    ],
+    "nearbyDestinations": ["Delhi (3-4 hours)", "Jaipur (4-5 hours)"]
+  },
+  {
+    "city": "Jaipur",
+    "attractions": [
+      "Amber Fort",
+      "Hawa Mahal",
+      "City Palace",
+      "Jantar Mantar",
+      "Nahargarh Fort (sunset)",
+      "Jal Mahal",
+      "Albert Hall Museum",
+      "Jaigarh Fort"
+    ],
+    "bestSeason": "October to March",
+    "daysRecommended": 2,
+    "travelTips": [
+      "Carry water in summer - it gets extremely hot",
+      "Avoid midday heat (11 AM - 3 PM in summer)",
+      "Bargain hard in markets (start at 50% of quoted price)",
+      "Be cautious of gem scams",
+      "Hire prepaid taxi or use Ola/Uber"
+    ],
+    "mustTry": [
+      "Dal Baati Churma",
+      "Lassiwala lassi",
+      "Bapu Bazaar for shopping"
+    ],
+    "nearbyDestinations": ["Delhi (5 hours)", "Agra (4-5 hours)", "Udaipur (6-7 hours)"]
+  },
+  {
+    "city": "Mumbai",
+    "attractions": [
+      "Gateway of India",
+      "Marine Drive",
+      "Elephanta Caves",
+      "Chhatrapati Shivaji Terminus",
+      "Haji Ali Dargah",
+      "Juhu Beach",
+      "Colaba Causeway",
+      "Bandra-Worli Sea Link"
+    ],
+    "bestSeason": "November to February",
+    "daysRecommended": 2,
+    "travelTips": [
+      "Avoid monsoon season (June-September) - heavy rains",
+      "Use local trains during non-peak hours",
+      "Carry small change for auto/taxis",
+      "South Mumbai is walkable",
+      "Evening at Marine Drive is must-do"
+    ],
+    "mustTry": [
+      "Vada Pav (street food)",
+      "Pav Bhaji at Sardar Pav Bhaji",
+      "Bhelpuri at Chowpatty Beach"
+    ],
+    "nearbyDestinations": ["Pune (3 hours)", "Goa (10 hours by train)"]
+  },
+  {
+    "city": "Goa",
+    "attractions": [
+      "Baga Beach",
+      "Calangute Beach",
+      "Anjuna Flea Market",
+      "Fort Aguada",
+      "Dudhsagar Waterfall",
+      "Old Goa Churches",
+      "Palolem Beach",
+      "Chapora Fort"
+    ],
+    "bestSeason": "November to February",
+    "daysRecommended": 4,
+    "travelTips": [
+      "Rent a scooter for freedom (international driving permit needed)",
+      "North Goa for parties, South Goa for peace",
+      "Negotiate taxi prices before getting in",
+      "Try local Goan cuisine (not just beach shacks)",
+      "Respect local culture (Goa is conservative outside tourist areas)"
+    ],
+    "mustTry": [
+      "Goan Fish Curry Rice",
+      "Bebinca (traditional dessert)",
+      "Fresh seafood at beach shacks"
+    ],
+    "nearbyDestinations": ["Mumbai (flight 1 hour, train 10-12 hours)", "Hampi (6 hours)", "Gokarna (3 hours)"]
+  },
+  {
+    "city": "Kerala",
+    "attractions": [
+      "Alleppey Backwaters",
+      "Munnar Tea Gardens",
+      "Periyar Wildlife Sanctuary",
+      "Fort Kochi",
+      "Kovalam Beach",
+      "Varkala Beach",
+      "Wayanad",
+      "Thekkady"
+    ],
+    "bestSeason": "September to March",
+    "daysRecommended": 5,
+    "travelTips": [
+      "Book houseboat in advance",
+      "Monsoon (June-August) is beautiful but wet",
+      "Try Ayurvedic treatments at reputable centers",
+      "Kerala is very literacy-focused, people speak English",
+      "Use Kerala State Road Transport buses - reliable"
+    ],
+    "mustTry": [
+      "Kerala Sadya (traditional meal on banana leaf)",
+      "Appam with stew",
+      "Fresh coconut water everywhere"
+    ],
+    "nearbyDestinations": ["Tamil Nadu (Coimbatore, Madurai)", "Karnataka (Bangalore, Mysore)"]
+  },
+  {
+    "city": "Varanasi",
+    "attractions": [
+      "Dashashwamedh Ghat",
+      "Assi Ghat",
+      "Kashi Vishwanath Temple",
+      "Sarnath (Buddha's first sermon)",
+      "Ganga Aarti (daily evening ceremony)",
+      "Manikarnika Ghat",
+      "Boat ride at sunrise"
+    ],
+    "bestSeason": "October to March",
+    "daysRecommended": 2,
+    "travelTips": [
+      "Respect cremation ghats - no photography",
+      "Dress modestly",
+      "Morning boat ride is transformative",
+      "Be prepared for crowds and chaos",
+      "Watch belongings in narrow alleys"
+    ],
+    "mustTry": [
+      "Kachori Sabzi breakfast",
+      "Lassi at Blue Lassi",
+      "Banarasi Paan"
+    ],
+    "nearbyDestinations": ["Prayagraj (3 hours)", "Bodhgaya (6 hours)"]
+  },
+  {
+    "city": "Rishikesh",
+    "attractions": [
+      "Laxman Jhula",
+      "Ram Jhula",
+      "Beatles Ashram",
+      "Triveni Ghat",
+      "Neer Garh Waterfall",
+      "Parmarth Niketan Ashram",
+      "Adventure sports (rafting, bungee)"
+    ],
+    "bestSeason": "September to November, February to May",
+    "daysRecommended": 3,
+    "travelTips": [
+      "Rishikesh is alcohol-free and vegetarian city",
+      "Book yoga/meditation courses in advance",
+      "River rafting best in March-April",
+      "Carry light woolens even in summer (evening chill)",
+      "Many free yoga classes at ashrams"
+    ],
+    "mustTry": [
+      "Simple sattvic food at ashrams",
+      "Chotiwala Restaurant (famous)",
+      "Fresh fruit juice by the river"
+    ],
+    "nearbyDestinations": ["Haridwar (30 min)", "Dehradun (1 hour)", "Mussoorie (2.5 hours)"]
+  },
+  {
+    "city": "Udaipur",
+    "attractions": [
+      "City Palace",
+      "Lake Pichola",
+      "Jag Mandir",
+      "Saheliyon Ki Bari",
+      "Fateh Sagar Lake",
+      "Monsoon Palace",
+      "Bagore Ki Haveli (evening cultural show)",
+      "Old City markets"
+    ],
+    "bestSeason": "September to March",
+    "daysRecommended": 2,
+    "travelTips": [
+      "Evening boat ride on Lake Pichola is magical",
+      "Old City is best explored on foot",
+      "Rooftop restaurants have amazing lake views",
+      "Bargain aggressively in markets",
+      "Visit at sunset for best photos"
+    ],
+    "mustTry": [
+      "Dal Baati Churma",
+      "Laal Maas (if non-vegetarian)",
+      "Roof-top dining at Ambrai or Upre"
+    ],
+    "nearbyDestinations": ["Jodhpur (5 hours)", "Jaipur (6-7 hours)", "Mount Abu (3 hours)"]
+  },
+  {
+    "city": "Leh",
+    "attractions": [
+      "Pangong Lake",
+      "Nubra Valley",
+      "Khardung La Pass",
+      "Leh Palace",
+      "Shanti Stupa",
+      "Magnetic Hill",
+      "Thiksey Monastery",
+      "Hemis Monastery"
+    ],
+    "bestSeason": "May to September",
+    "daysRecommended": 5,
+    "travelTips": [
+      "Acclimatize for 24-48 hours (rest on arrival due to altitude)",
+      "Road access only May-September (Manali-Leh, Srinagar-Leh)",
+      "Carry Diamox for altitude sickness",
+      "Inner Line Permit needed for some areas",
+      "Book accommodations in advance (limited rooms)",
+      "Cash is king - ATMs are unreliable"
+    ],
+    "mustTry": [
+      "Thukpa (Tibetan noodle soup)",
+      "Momos",
+      "Butter tea"
+    ],
+    "nearbyDestinations": ["Manali (2-day road trip)", "Srinagar (2-day road trip)"]
+  },
+  {
+    "city": "Bangalore",
+    "attractions": [
+      "Lalbagh Botanical Garden",
+      "Bangalore Palace",
+      "Cubbon Park",
+      "ISKCON Temple",
+      "Tipu Sultan's Summer Palace",
+      "Bull Temple",
+      "Vidhana Soudha",
+      "Commercial Street shopping"
+    ],
+    "bestSeason": "September to February",
+    "daysRecommended": 2,
+    "travelTips": [
+      "Traffic is terrible - plan accordingly",
+      "Use Namma Metro where possible",
+      "Weather is pleasant year-round",
+      "Great food scene - try local Kannada cuisine",
+      "Many craft breweries (if interested)"
+    ],
+    "mustTry": [
+      "Masala Dosa at Vidyarthi Bhavan",
+      "Bisi Bele Bath",
+      "South Indian filter coffee"
+    ],
+    "nearbyDestinations": ["Mysore (3 hours)", "Coorg (5 hours)", "Hampi (6 hours)"]
+  }
+]
