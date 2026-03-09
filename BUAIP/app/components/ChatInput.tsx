@@ -219,7 +219,7 @@ export default function ChatInput({ onSend, onFileUpload, isLoading = false }: C
                       {pendingFile.file.name}
                     </span>
                     <span className="text-xs text-blue-600">
-                      {(pendingFile.file.size / 1024).toFixed(1)} KB — Type a question or press Send to analyze
+                      {(pendingFile.file.size / 1024).toFixed(1)} KB — {t('chat_pending_file_hint')}
                     </span>
                   </div>
                 </div>
@@ -228,7 +228,7 @@ export default function ChatInput({ onSend, onFileUpload, isLoading = false }: C
                   onClick={cancelPendingFile}
                   className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
                 >
-                  ✕ Remove
+                  ✕ {t('chat_pending_file_remove')}
                 </button>
               </div>
             </motion.div>
@@ -444,7 +444,7 @@ export default function ChatInput({ onSend, onFileUpload, isLoading = false }: C
               value={message}
               onChange={handleChange}
               disabled={isLoading}
-              placeholder={pendingFile ? 'Type a question about this file, or press Send to auto-analyze...' : isListening ? t('chat_input_listening_placeholder') : t('chat_input_placeholder')}
+              placeholder={pendingFile ? t('chat_pending_file_placeholder') : isListening ? t('chat_input_listening_placeholder') : t('chat_input_placeholder')}
               className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors text-xs sm:text-sm md:text-base disabled:bg-gray-50 disabled:cursor-not-allowed text-black placeholder-gray-400"
             />
             {isTyping && (

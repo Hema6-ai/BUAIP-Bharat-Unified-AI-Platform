@@ -181,6 +181,13 @@ async function handleJsonRequest(body: any): Promise<NextResponse> {
       capability: 'document-question',
       response: answer,
       documentName: doc.fileName,
+      pipeline: [
+        'Input',
+        'Context Extraction',
+        'Structured Knowledge Retrieval',
+        'AI Reasoning',
+        'Human-friendly explanation',
+      ],
       engine: 'BUAIP Document Q&A',
     });
   }
@@ -223,8 +230,25 @@ async function handleFileUpload(request: NextRequest): Promise<NextResponse> {
   const mimeType = file.type || '';
 
   // Route: image or document?
-  const isImage = IMAGE_MIMES.has(mimeType) ||
+  const isImage =
+    IMAGE_MIMES.has(mimeType) ||
     /\.(jpg|jpeg|png|gif|bmp|webp|tiff)$/i.test(fileName);
+
+  const isTextDocument =
+    mimeType === 'application/pdf' ||
+    mimeType === 'text/plain' ||
+    mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    /\.(pdf|docx|txt)$/i.test(fileName);
+
+  if (!isImage && !isTextDocument) {
+    return NextResponse.json(
+      {
+        error:
+          'Unsupported file format. Please upload PDF, DOCX, TXT, image, or scanned document.',
+      },
+      { status: 400 },
+    );
+  }
 
   if (
     capability === 'photo-answer' ||
@@ -246,17 +270,16 @@ async function handleDocumentAnalysis(
   sessionId: string,
   question: string,
 ): Promise<NextResponse> {
-  // Step 1: Extract text
-  const { text, pageCount } = await extractTextFromBuffer(buffer, fileName, mimeType);
+  const progressStages = [
+    'Parsing document',
+    'Analyzing sections',
+    'Generating explanation',
+  ];
 
-  if (!text || text.trim().length < 20) {
-    return NextResponse.json(
-      {
-        error: 'Could not extract enough text from the uploaded file. The file may be empty, corrupted, or in an unsupported format.',
-      },
-      { status: 422 },
-    );
-  }
+  // Step 1: Extract text
+  const extraction = await extractTextFromBuffer(buffer, fileName, mimeType);
+  const text = extraction.text || '';
+  const pageCount = extraction.pageCount || 1;
 
   // Step 2: Chunk
   const chunks = chunkDocument(text, pageCount);
@@ -270,6 +293,11 @@ async function handleDocumentAnalysis(
     chunks,
     pageCount,
     extractedAt: Date.now(),
+    metadata: {
+      extractionMethod: extraction.method,
+      usedOcr: extraction.usedOcr,
+      warnings: extraction.warnings,
+    },
   };
 
   // Step 4: Store in session memory
@@ -286,20 +314,42 @@ async function handleDocumentAnalysis(
       pageCount,
       sections: chunks.length,
       textLength: text.length,
+      progressStages,
+      metadata: doc.metadata,
+      pipeline: [
+        'Input',
+        'Context Extraction',
+        'Structured Knowledge Creation',
+        'AI Reasoning',
+        'Human-friendly explanation',
+      ],
       engine: 'BUAIP Document Q&A',
     });
   }
 
   const explanation = await generateDocumentExplanation(doc);
+
+  const fallbackMessage =
+    'The file was uploaded successfully, but only limited text could be extracted. Please ask a specific question about the visible content for a targeted answer.';
+
   return NextResponse.json({
     capability: 'document-explain',
-    response: explanation.fullExplanation,
+    response: explanation.fullExplanation || fallbackMessage,
     documentName: fileName,
     documentId: doc.documentId,
     pageCount,
     sections: chunks.length,
     textLength: text.length,
     summary: explanation.summary,
+    progressStages,
+    metadata: doc.metadata,
+    pipeline: [
+      'Input',
+      'Context Extraction',
+      'Structured Knowledge Creation',
+      'AI Reasoning',
+      'Human-friendly explanation',
+    ],
     engine: 'BUAIP Document Explainer',
   });
 }
@@ -312,6 +362,12 @@ async function handleImageAnalysis(
   sessionId: string,
   question: string,
 ): Promise<NextResponse> {
+  const progressStages = [
+    'Extracting visual and OCR signals',
+    'Identifying intent',
+    'Generating explanation',
+  ];
+
   const analysis = await analyzeImage(buffer, question || undefined);
 
   const imageId = `img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -332,6 +388,15 @@ async function handleImageAnalysis(
       .slice(0, 20),
     detectedIntent: analysis.detectedIntent,
     intentCategory: analysis.intentCategory,
+    sceneContext: analysis.sceneContext,
+    progressStages,
+    pipeline: [
+      'Input',
+      'Context Extraction',
+      'Structured Knowledge Creation',
+      'AI Reasoning',
+      'Human-friendly explanation',
+    ],
     engine: 'BUAIP Photo Analyzer',
   });
 }

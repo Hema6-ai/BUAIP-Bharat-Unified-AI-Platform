@@ -37,12 +37,37 @@ type IntentName =
   | 'general_query';
 
 const DOMAIN_KEYWORDS: Record<EngineId, string[]> = {
-  scheme: ['scheme', 'schemes', 'subsidy', 'subsidies', 'eligibility', 'benefit', 'benefits', 'yojana', 'apply', 'documents'],
-  agriculture: ['crop', 'farming', 'farmer', 'soil', 'irrigation', 'fertilizer', 'pest', 'mandi'],
-  commerce: ['business', 'sell', 'marketplace', 'amazon', 'export', 'pricing', 'logistics', 'supply chain'],
-  tourism: ['travel', 'trip', 'tour', 'visa', 'city', 'transport', 'hotel', 'itinerary', 'safety'],
-  legal: ['legal', 'rights', 'complaint', 'landlord', 'fir', 'police', 'fraud', 'court', 'law'],
-  career: ['career', 'after 12th', 'course', 'job', 'skills', 'college', 'roadmap', 'salary'],
+  scheme: [
+    'scheme', 'schemes', 'subsidy', 'subsidies', 'eligibility', 'benefit', 'benefits', 
+    'yojana', 'apply', 'documents', 'government help', 'sarkari', 'pradhan mantri',
+    'application', 'form', 'registration', 'enrollment', 'financial aid', 'assistance',
+    'welfare', 'pension', 'allowance', 'grant', 'scholarship'
+  ],
+  agriculture: [
+    'crop', 'farming', 'farmer', 'soil', 'irrigation', 'fertilizer', 'pest', 'mandi',
+    'kisan', 'agriculture', 'harvest', 'seeds', 'pesticide', 'cultivation', 'land',
+    'field', 'produce', 'yield', 'monsoon', 'drought', 'rain', 'water', 'borewell'
+  ],
+  commerce: [
+    'business', 'sell', 'marketplace', 'amazon', 'export', 'pricing', 'logistics', 'supply chain',
+    'flipkart', 'ecommerce', 'online business', 'shop', 'vendor', 'supplier', 'merchant',
+    'import', 'customs', 'shipping', 'delivery', 'product', 'inventory', 'profit', 'revenue'
+  ],
+  tourism: [
+    'travel', 'trip', 'tour', 'visa', 'city', 'transport', 'hotel', 'itinerary', 'safety',
+    'tourist', 'vacation', 'destination', 'flight', 'train', 'taxi', 'guide', 'sightseeing',
+    'accommodation', 'booking', 'tourism', 'visit', 'explore', 'heritage', 'culture'
+  ],
+  legal: [
+    'legal', 'rights', 'complaint', 'landlord', 'fir', 'police', 'fraud', 'court', 'law',
+    'advocate', 'lawyer', 'case', 'dispute', 'tenant', 'property', 'eviction', 'harassment',
+    'consumer', 'refund', 'cheating', 'contract', 'agreement', 'notice', 'justice'
+  ],
+  career: [
+    'career', 'after 12th', 'course', 'job', 'skills', 'college', 'roadmap', 'salary',
+    'education', 'degree', 'diploma', 'training', 'placement', 'interview', 'resume',
+    'engineering', 'medicine', 'entrance', 'exam', 'university', 'institute', 'profession'
+  ],
 };
 
 const INTENT_TO_DOMAIN: Record<IntentName, EngineId | null> = {
@@ -200,6 +225,10 @@ function buildSupportingContext(domain: EngineId, context: EngineRunContext): st
     if (context.profileSummary) parts.push(context.profileSummary);
   }
 
+  if (context.languageContext) {
+    parts.push(`Language requirement:\n${context.languageContext}`);
+  }
+
   if (entityContext) parts.push(`Extracted entities: ${entityContext}`);
 
   if (domain === 'legal') {
@@ -291,6 +320,8 @@ export async function runSuperRouter(input: SuperRouterInput): Promise<SuperRout
         domain: DOMAIN_LABEL[out.engineId],
         analysis: out.reasoningText,
       })),
+      languageContext: input.languageContext,
+      responseLanguage: input.responseLanguage,
     });
   }
 
@@ -335,6 +366,7 @@ export async function streamSuperRouter(
       userMessage: input.userMessage,
       conversationHistory: input.conversationHistory,
       supportingContext,
+      languageContext: input.languageContext,
     });
 
     return { stream, meta };
@@ -351,6 +383,8 @@ export async function streamSuperRouter(
       domain: DOMAIN_LABEL[out.engineId],
       analysis: out.reasoningText,
     })),
+    languageContext: input.languageContext,
+    responseLanguage: input.responseLanguage,
   });
 
   return { stream, meta };

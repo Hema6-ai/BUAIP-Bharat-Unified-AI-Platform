@@ -8,6 +8,7 @@ import { useTranslation } from '@/app/lib/useTranslation';
 import {
   SUPPORTED_LANGUAGE_GROUPS,
   getLanguageOption,
+  getLocalizedDisplayLanguageName,
   type SupportedLanguageCode,
 } from '@/app/lib/languageConfig';
 
@@ -22,6 +23,7 @@ export default function Navbar({ onLanguageChange, onLogoClick }: NavbarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const selectedLanguage = getLanguageOption(language);
+  const selectedLanguageLabel = getLocalizedDisplayLanguageName(language, language);
 
   const regionLabels: Record<string, string> = {
     India: t('navbar_region_india'),
@@ -66,8 +68,8 @@ export default function Navbar({ onLanguageChange, onLogoClick }: NavbarProps) {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <span className="hidden sm:inline">{t('header_language')}: {selectedLanguage.label}</span>
-            <span className="sm:hidden">{selectedLanguage.label}</span>
+            <span className="hidden sm:inline">{t('header_language')}: {selectedLanguageLabel}</span>
+            <span className="sm:hidden">{selectedLanguageLabel}</span>
             <svg
               className={`w-4 h-4 transition-transform ${
                 isDropdownOpen ? 'rotate-180' : ''
@@ -112,7 +114,7 @@ export default function Navbar({ onLanguageChange, onLogoClick }: NavbarProps) {
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      {lang.label}
+                      {getLocalizedDisplayLanguageName(lang.code as SupportedLanguageCode, language)}
                     </button>
                   ))}
                 </div>

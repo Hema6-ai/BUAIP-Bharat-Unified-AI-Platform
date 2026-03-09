@@ -20,6 +20,7 @@ export async function runCommerceEngine(context: EngineRunContext): Promise<Engi
     userMessage: context.userMessage,
     conversationHistory: context.conversationHistory,
     supportingContext,
+    languageContext: context.languageContext,
   });
 
   return {

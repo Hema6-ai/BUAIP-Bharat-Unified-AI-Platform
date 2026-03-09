@@ -14,19 +14,14 @@ const DATE_TIME_PATTERNS = [
   /\bday\s+today\b/i,
 ];
 
+// Weather and mandi prices are now handled by specialized engines (Annadata)
+// Only block truly unavailable data like stock prices and exchange rates
 const LIVE_DATA_PATTERNS = [
-  /\bweather\b/i,
-  /\btemperature\b/i,
-  /\brain\b/i,
-  /\bforecast\b/i,
-  /\bmandi\s+price\b/i,
-  /\blive\s+price\b/i,
-  /\bcurrent\s+price\b/i,
-  /\bmarket\s+price\b/i,
-  /\bstatistics?\b/i,
-  /\bstat\b/i,
   /\bexchange\s+rate\b/i,
   /\bstock\s+price\b/i,
+  /\bshare\s+price\b/i,
+  /\bcrypto\s+price\b/i,
+  /\bbitcoin\b/i,
 ];
 
 export function getCurrentDateTimeIST(): string {

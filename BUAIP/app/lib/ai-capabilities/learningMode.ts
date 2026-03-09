@@ -1,7 +1,6 @@
 /**
  * Adaptive Learning Mode Engine
- * Teaches concepts interactively like a tutor/mentor.
- * Runs a learning loop: explain → check → evaluate → adapt.
+ * Input -> learner context extraction -> knowledge map -> tutor reasoning -> adaptive explanation
  *
  * Uses Bedrock Claude for all reasoning.
  */
@@ -18,6 +17,7 @@ export interface LearningState {
   correctAnswers: number;
   conversationSoFar: Array<{ role: 'user' | 'assistant'; content: string }>;
   lastCheckQuestion?: string;
+  weakAreas?: string[];
 }
 
 export interface LearningResponse {
@@ -26,48 +26,109 @@ export interface LearningResponse {
   isComplete: boolean;
 }
 
+interface StartLessonModel {
+  conceptMap: string[];
+  explanation: string;
+  practicalExample: string;
+  checkQuestion: string;
+}
+
+interface AnswerEvaluationModel {
+  verdict: 'correct' | 'partial' | 'incorrect';
+  strengths: string[];
+  gaps: string[];
+  confidence: 'high' | 'medium' | 'low';
+}
+
+interface AdaptedTutorTurnModel {
+  feedback: string;
+  bridgeExplanation: string;
+  nextQuestion: string;
+  studyTip: string;
+}
+
 // ── Initial explanation ──
 
 export async function startLearning(
   topic: string,
   existingHistory: Array<{ role: string; content: string }>,
 ): Promise<LearningResponse> {
-  const systemPrompt = `You are BUAIP Learning Mode — an adaptive AI tutor.
+  const systemPrompt = `You are BUAIP Adaptive Tutor.
 
-Your teaching style:
-- Explain concepts in very simple language
-- Use real-life analogies and Indian context examples
-- Break complex topics into digestible pieces
-- At the end of your explanation, ALWAYS ask ONE check question to test understanding
-- Mark the check question clearly with "🤔 **Quick Check:**"
+Create a first-turn lesson from topic input.
+You must return valid JSON only.
 
-Current task: Explain the topic requested. Then ask one simple question to check if the student understood.
+Rules:
+- Teach in simple language for beginners.
+- Build a mini concept map before explanation.
+- Use one practical India-relevant example.
+- End with exactly one check question.
+- Avoid generic motivational filler.
 
-Format your response:
-1. Simple explanation with bullet points / numbered steps
-2. Real-world example
-3. If it's a career/skill topic, include: roadmap, required skills, resources
-4. End with exactly ONE check question
+JSON schema:
+{
+  "conceptMap": ["string"],
+  "explanation": "string",
+  "practicalExample": "string",
+  "checkQuestion": "string"
+}`;
 
-Keep it conversational and encouraging.`;
-
-  const explanation = await callBedrock(
-    [{ role: 'user', content: `Teach me about: ${topic}` }],
+  const historySnippet = existingHistory.slice(-6);
+  const modelOutput = await callBedrock(
+    [
+      {
+        role: 'user',
+        content: `Topic: ${topic}\nPrior conversation context: ${JSON.stringify(historySnippet)}`,
+      },
+    ],
     systemPrompt,
-    { maxTokens: 2500, temperature: 0.4 },
+    { maxTokens: 1600, temperature: 0.2 },
   );
+
+  const structured = parseJsonFromModel<StartLessonModel>(modelOutput);
+
+  const explanation = structured
+    ? [
+        `Topic: ${topic}`,
+        '',
+        'Learning Map',
+        ...(structured.conceptMap || []).map((point, index) => `${index + 1}. ${point}`),
+        '',
+        'Core Explanation',
+        structured.explanation,
+        '',
+        'Practical Example',
+        structured.practicalExample,
+        '',
+        `Quick Check: ${structured.checkQuestion}`,
+      ].join('\n')
+    : [
+        `Topic: ${topic}`,
+        '',
+        'Core Explanation',
+        modelOutput,
+        '',
+        'Quick Check: In one or two lines, what is the main idea you learned?',
+      ].join('\n');
 
   const state: LearningState = {
     topic,
     level: 'beginner',
-    step: 'question', // After explaining, we're waiting for the answer
+    step: 'question',
     questionsAsked: 1,
     correctAnswers: 0,
     conversationSoFar: [
+      ...historySnippet
+        .filter((message) => message.role === 'user' || message.role === 'assistant')
+        .map((message) => ({
+          role: message.role as 'user' | 'assistant',
+          content: message.content,
+        })),
       { role: 'user', content: `Teach me about: ${topic}` },
       { role: 'assistant', content: explanation },
     ],
-    lastCheckQuestion: extractCheckQuestion(explanation),
+    lastCheckQuestion: structured?.checkQuestion || extractCheckQuestion(explanation),
+    weakAreas: [],
   };
 
   return { response: explanation, state, isComplete: false };
@@ -79,76 +140,45 @@ export async function continueLearning(
   userAnswer: string,
   state: LearningState,
 ): Promise<LearningResponse> {
-  const systemPrompt = `You are BUAIP Learning Mode — an adaptive AI tutor in a learning loop.
+  const recentTurns = state.conversationSoFar.slice(-8);
+  const evaluation = await evaluateLearnerAnswer(state, userAnswer, recentTurns);
+  const updatedLevel = adaptDifficultyLevel(state.level, evaluation.verdict, state);
 
-Topic: ${state.topic}
-Student Level: ${state.level}
-Questions asked so far: ${state.questionsAsked}
-Correct answers: ${state.correctAnswers}
+  const tutorResponse = await generateAdaptiveTutorTurn(
+    state,
+    userAnswer,
+    evaluation,
+    updatedLevel,
+    recentTurns,
+  );
 
-Your task:
-1. First, evaluate whether the student's answer is correct, partially correct, or wrong.
-2. Give encouraging feedback.
-3. If WRONG → Re-explain the concept more simply with a different analogy. Then ask an easier question.
-4. If PARTIALLY CORRECT → Acknowledge what they got right, clarify what they missed. Ask a similar-level question.
-5. If CORRECT → Praise them! Move to a deeper/harder concept. Ask a harder question.
+  const isCorrect = evaluation.verdict === 'correct';
+  const mergedWeakAreas = Array.from(
+    new Set([...(state.weakAreas || []), ...(evaluation.gaps || [])]),
+  ).slice(0, 6);
 
-Always end with ONE new check question marked with "🤔 **Quick Check:**"
-
-Keep it conversational. Be encouraging. Use simple language.
-Adapt your language complexity to the student's level.`;
-
-  const messages = [
-    ...state.conversationSoFar.map((m) => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content,
-    })),
-    { role: 'user' as const, content: userAnswer },
-  ];
-
-  const response = await callBedrock(messages, systemPrompt, {
-    maxTokens: 2000,
-    temperature: 0.4,
-  });
-
-  // Determine if answer was correct based on AI response
-  const lowerResp = response.toLowerCase();
-  const isCorrect =
-    lowerResp.includes('correct') ||
-    lowerResp.includes('right') ||
-    lowerResp.includes('exactly') ||
-    lowerResp.includes('well done') ||
-    lowerResp.includes('great job') ||
-    lowerResp.includes('that\'s right');
-
-  const isPartial =
-    lowerResp.includes('partially') ||
-    lowerResp.includes('almost') ||
-    lowerResp.includes('close');
-
-  // Update state
   const newState: LearningState = {
     ...state,
     step: 'question',
     questionsAsked: state.questionsAsked + 1,
-    correctAnswers: state.correctAnswers + (isCorrect && !isPartial ? 1 : 0),
-    level: isCorrect && !isPartial
-      ? advanceLevel(state.level)
-      : (!isCorrect && !isPartial ? retreatLevel(state.level) : state.level),
+    correctAnswers: state.correctAnswers + (isCorrect ? 1 : 0),
+    level: updatedLevel,
     conversationSoFar: [
       ...state.conversationSoFar,
       { role: 'user', content: userAnswer },
-      { role: 'assistant', content: response },
+      { role: 'assistant', content: tutorResponse },
     ],
-    lastCheckQuestion: extractCheckQuestion(response),
+    lastCheckQuestion: extractCheckQuestion(tutorResponse),
+    weakAreas: mergedWeakAreas,
   };
 
-  // Learning is "complete" after 5+ questions with 80%+ accuracy
+  const accuracy = newState.correctAnswers / newState.questionsAsked;
   const isComplete =
     newState.questionsAsked >= 6 &&
-    newState.correctAnswers / newState.questionsAsked >= 0.8;
+    accuracy >= 0.75 &&
+    (newState.level === 'intermediate' || newState.level === 'advanced');
 
-  return { response, state: newState, isComplete };
+  return { response: tutorResponse, state: newState, isComplete };
 }
 
 // ── Helpers ──
@@ -168,14 +198,174 @@ function retreatLevel(
 }
 
 function extractCheckQuestion(text: string): string | undefined {
-  // Look for the check question marker
-  const match = text.match(/🤔\s*\*?\*?Quick Check:?\*?\*?\s*(.+?)(?:\n|$)/i);
+  const match = text.match(/Quick Check:\s*(.+?)(?:\n|$)/i);
   if (match) return match[1].trim();
 
-  // Fallback: last question mark sentence
   const sentences = text.split(/[.!]\s+/);
   const questions = sentences.filter((s) => s.includes('?'));
   return questions.length > 0
     ? questions[questions.length - 1].trim()
     : undefined;
+}
+
+function adaptDifficultyLevel(
+  current: 'beginner' | 'intermediate' | 'advanced',
+  verdict: 'correct' | 'partial' | 'incorrect',
+  state: LearningState,
+): 'beginner' | 'intermediate' | 'advanced' {
+  if (verdict === 'correct') {
+    const projectedAccuracy = (state.correctAnswers + 1) / (state.questionsAsked + 1);
+    if (projectedAccuracy >= 0.7) {
+      return advanceLevel(current);
+    }
+    return current;
+  }
+
+  if (verdict === 'incorrect') {
+    return retreatLevel(current);
+  }
+
+  return current;
+}
+
+async function evaluateLearnerAnswer(
+  state: LearningState,
+  userAnswer: string,
+  recentTurns: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Promise<AnswerEvaluationModel> {
+  const systemPrompt = `You are a strict learning evaluator.
+Given the tutor's previous explanation and check question, evaluate the learner answer.
+
+Return valid JSON only:
+{
+  "verdict": "correct|partial|incorrect",
+  "strengths": ["string"],
+  "gaps": ["string"],
+  "confidence": "high|medium|low"
+}`;
+
+  const payload = {
+    topic: state.topic,
+    learnerLevel: state.level,
+    lastCheckQuestion: state.lastCheckQuestion || null,
+    recentTurns,
+    learnerAnswer: userAnswer,
+  };
+
+  const raw = await callBedrock(
+    [{ role: 'user', content: JSON.stringify(payload, null, 2) }],
+    systemPrompt,
+    { maxTokens: 900, temperature: 0.05 },
+  );
+
+  const parsed = parseJsonFromModel<AnswerEvaluationModel>(raw);
+  if (parsed?.verdict) {
+    return parsed;
+  }
+
+  return {
+    verdict: 'partial',
+    strengths: [],
+    gaps: ['Could not reliably evaluate answer quality.'],
+    confidence: 'low',
+  };
+}
+
+async function generateAdaptiveTutorTurn(
+  state: LearningState,
+  userAnswer: string,
+  evaluation: AnswerEvaluationModel,
+  updatedLevel: 'beginner' | 'intermediate' | 'advanced',
+  recentTurns: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Promise<string> {
+  const systemPrompt = `You are BUAIP Adaptive Tutor.
+
+Use the evaluation result to produce the next tutor turn.
+You must return valid JSON only.
+
+Rules:
+- If verdict is incorrect: simplify concept and ask easier next question.
+- If verdict is partial: confirm correct parts, close one key gap, then ask similar-level question.
+- If verdict is correct: deepen to next concept and ask slightly harder question.
+- Keep tone warm but concise.
+- End with exactly one next question.
+
+JSON schema:
+{
+  "feedback": "string",
+  "bridgeExplanation": "string",
+  "nextQuestion": "string",
+  "studyTip": "string"
+}`;
+
+  const payload = {
+    topic: state.topic,
+    previousLevel: state.level,
+    updatedLevel,
+    evaluation,
+    learnerAnswer: userAnswer,
+    weakAreas: state.weakAreas || [],
+    recentTurns,
+  };
+
+  const raw = await callBedrock(
+    [{ role: 'user', content: JSON.stringify(payload, null, 2) }],
+    systemPrompt,
+    { maxTokens: 1400, temperature: 0.2 },
+  );
+
+  const structured = parseJsonFromModel<AdaptedTutorTurnModel>(raw);
+  if (!structured) {
+    return [
+      'Feedback',
+      `Your answer is ${evaluation.verdict}. Let's tighten the idea with one short revision.`,
+      '',
+      'Mini Lesson',
+      `Topic focus: ${state.topic}. Keep your explanation to one core principle and one practical example.`,
+      '',
+      'Study Tip',
+      'Use the pattern definition -> example -> why it matters before answering.',
+      '',
+      'Quick Check: Can you now explain this concept in two lines with one example?',
+    ].join('\n');
+  }
+
+  return [
+    'Feedback',
+    structured.feedback,
+    '',
+    'Mini Lesson',
+    structured.bridgeExplanation,
+    '',
+    'Study Tip',
+    structured.studyTip,
+    '',
+    `Quick Check: ${structured.nextQuestion}`,
+  ].join('\n');
+}
+
+function parseJsonFromModel<T>(text: string): T | null {
+  const direct = tryJsonParse<T>(text);
+  if (direct) return direct;
+
+  const fenced = text.match(/```json\s*([\s\S]*?)\s*```/i);
+  if (fenced?.[1]) {
+    const parsed = tryJsonParse<T>(fenced[1]);
+    if (parsed) return parsed;
+  }
+
+  const objectMatch = text.match(/\{[\s\S]*\}/);
+  if (objectMatch?.[0]) {
+    return tryJsonParse<T>(objectMatch[0]);
+  }
+
+  return null;
+}
+
+function tryJsonParse<T>(text: string): T | null {
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
 }

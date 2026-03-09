@@ -23,6 +23,35 @@ export interface UseSTTReturn {
   error: string | null;
 }
 
+function normalizeWhitespace(text: string): string {
+  return (text || '').replace(/\s+/g, ' ').trim();
+}
+
+function mergeWithTokenOverlap(base: string, addition: string): string {
+  const cleanBase = normalizeWhitespace(base);
+  const cleanAddition = normalizeWhitespace(addition);
+
+  if (!cleanBase) return cleanAddition;
+  if (!cleanAddition) return cleanBase;
+
+  const baseTokens = cleanBase.split(' ');
+  const additionTokens = cleanAddition.split(' ');
+  const maxOverlap = Math.min(baseTokens.length, additionTokens.length, 8);
+
+  let overlap = 0;
+  for (let size = maxOverlap; size >= 1; size--) {
+    const baseTail = baseTokens.slice(baseTokens.length - size).join(' ').toLowerCase();
+    const additionHead = additionTokens.slice(0, size).join(' ').toLowerCase();
+    if (baseTail === additionHead) {
+      overlap = size;
+      break;
+    }
+  }
+
+  const mergedTokens = baseTokens.concat(additionTokens.slice(overlap));
+  return normalizeWhitespace(mergedTokens.join(' '));
+}
+
 export function useSpeechToText(): UseSTTReturn {
   const { language } = useLanguage();
   const [transcript, setTranscript] = useState('');
@@ -84,7 +113,7 @@ export function useSpeechToText(): UseSTTReturn {
         else interim += txt;
       }
       sessionFinals = finals.trim();
-      const allFinals = [prevFinalsRef.current, sessionFinals].filter(Boolean).join(' ');
+      const allFinals = mergeWithTokenOverlap(prevFinalsRef.current, sessionFinals);
       setTranscript(interim ? (allFinals + ' ' + interim).trim() : allFinals);
       setInterimText(interim);
     };
@@ -103,7 +132,7 @@ export function useSpeechToText(): UseSTTReturn {
     rec.onend = () => {
       // Accumulate this session's finals before restart
       if (sessionFinals) {
-        prevFinalsRef.current = [prevFinalsRef.current, sessionFinals].filter(Boolean).join(' ');
+        prevFinalsRef.current = mergeWithTokenOverlap(prevFinalsRef.current, sessionFinals);
         sessionFinals = '';
       }
       if (activeRef.current) {

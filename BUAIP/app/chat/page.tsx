@@ -20,9 +20,8 @@ interface Message {
 }
 
 export default function ChatPage() {
-  const { language, translationsReady } = useLanguage();
+  const { language } = useLanguage();
   const { t } = useTranslation();
-  const [mounted, setMounted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [learningActive, setLearningActive] = useState(false);
@@ -32,10 +31,6 @@ export default function ChatPage() {
   );
 
   const generateId = () => `msg-${++messageIdRef.current}`;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const goHome = () => {
     setMessages([]);
@@ -84,7 +79,7 @@ export default function ChatPage() {
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Learning mode request failed');
+          throw new Error(err.error || t('chat_learning_mode_request_failed'));
         }
 
         const data = await res.json();
@@ -102,7 +97,7 @@ export default function ChatPage() {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
-              ? { ...m, content: `Learning mode error: ${error.message}`, isTyping: false }
+              ? { ...m, content: `${t('chat_learning_mode_error_prefix')}. ${t('common_try_again')}.`, isTyping: false }
               : m
           )
         );
@@ -111,7 +106,7 @@ export default function ChatPage() {
         setIsLoading(false);
       }
     },
-    [learningActive],
+    [learningActive, t],
   );
 
   // ── File Upload Handler ──
@@ -135,7 +130,10 @@ export default function ChatPage() {
         {
           id: assistantId,
           role: 'assistant',
-          content: `⏳ Analyzing ${capability === 'photo-answer' ? 'image' : 'document'}...`,
+          content:
+            capability === 'photo-answer'
+              ? t('chat_analyzing_image')
+              : t('chat_analyzing_document'),
           isTyping: true,
         },
       ]);
@@ -154,7 +152,7 @@ export default function ChatPage() {
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'File analysis failed');
+          throw new Error(err.error || t('chat_file_analysis_failed'));
         }
 
         const data = await res.json();
@@ -171,7 +169,7 @@ export default function ChatPage() {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
-              ? { ...m, content: `Analysis error: ${error.message}`, isTyping: false }
+              ? { ...m, content: `${t('chat_file_analysis_error_prefix')}. ${t('common_try_again')}.`, isTyping: false }
               : m
           )
         );
@@ -179,7 +177,7 @@ export default function ChatPage() {
         setIsLoading(false);
       }
     },
-    [],
+    [t],
   );
 
   const handleSendMessage = useCallback(
@@ -342,10 +340,6 @@ export default function ChatPage() {
   const handlePromptSelect = (prompt: string) => {
     handleSendMessage(prompt);
   };
-
-  if (!mounted || !translationsReady) {
-    return <LoadingScreen />;
-  }
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">

@@ -1,13 +1,16 @@
 /**
- * Image / Vision Analysis Pipeline
- * Uses AWS Rekognition for object/text detection,
- * then Bedrock Claude for intelligent reasoning about the image.
+ * Photo capability pipeline
+ * Input -> Context extraction -> Structured knowledge -> AI reasoning -> Human explanation
  */
 
 import {
-  RekognitionClient,
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from '@aws-sdk/client-bedrock-runtime';
+import {
   DetectLabelsCommand,
   DetectTextCommand,
+  RekognitionClient,
 } from '@aws-sdk/client-rekognition';
 import { callBedrock } from '@/app/lib/bedrock';
 
@@ -19,7 +22,13 @@ const rekognition = new RekognitionClient({
   },
 });
 
-// ── Types ──
+const bedrockVisionClient = new BedrockRuntimeClient({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 export interface ImageLabel {
   name: string;
@@ -36,202 +45,355 @@ export interface ImageText {
 export interface ImageAnalysis {
   labels: ImageLabel[];
   textDetections: ImageText[];
+  sceneContext: string;
   detectedIntent: string;
   intentCategory: string;
   explanation: string;
 }
 
-// ── Step 1: Run Rekognition ──
-
-async function detectLabels(imageBuffer: Buffer): Promise<ImageLabel[]> {
-  const command = new DetectLabelsCommand({
-    Image: { Bytes: imageBuffer },
-    MaxLabels: 20,
-    MinConfidence: 55,
-  });
-  const response = await rekognition.send(command);
-
-  return (response.Labels || []).map((l) => ({
-    name: l.Name || '',
-    confidence: l.Confidence || 0,
-    parents: (l.Parents || []).map((p) => p.Name || ''),
-  }));
+interface VisionKnowledge {
+  objects: Array<{ name: string; confidence: number }>;
+  detectedTextLines: string[];
+  sceneContext: string;
+  inferredPurpose: string;
 }
 
-async function detectText(imageBuffer: Buffer): Promise<ImageText[]> {
-  const command = new DetectTextCommand({
-    Image: { Bytes: imageBuffer },
-  });
-  const response = await rekognition.send(command);
-
-  return (response.TextDetections || []).map((t) => ({
-    text: t.DetectedText || '',
-    confidence: t.Confidence || 0,
-    type: (t.Type as 'LINE' | 'WORD') || 'WORD',
-  }));
+interface VisionResponseModel {
+  whatImageShows: string;
+  whatItMeans: string;
+  nextActions: string[];
+  confidence: 'high' | 'medium' | 'low';
 }
-
-// ── Step 2: Detect intent from labels ──
 
 const INTENT_RULES: Array<{
-  keywords: string[];
-  intent: string;
   category: string;
+  intent: string;
+  objectKeywords: string[];
+  textKeywords: string[];
 }> = [
   {
-    keywords: ['plant', 'crop', 'leaf', 'vegetation', 'farm', 'agriculture', 'flower', 'weed', 'soil', 'seed'],
-    intent: 'crop_disease_analysis',
     category: 'agriculture',
+    intent: 'crop_disease_analysis',
+    objectKeywords: ['plant', 'leaf', 'crop', 'vegetation', 'farm', 'soil'],
+    textKeywords: ['fungal', 'pest', 'blight', 'leaf spot'],
   },
   {
-    keywords: ['document', 'paper', 'form', 'text', 'letter', 'certificate', 'receipt', 'invoice'],
-    intent: 'document_analysis',
     category: 'document',
+    intent: 'government_form_analysis',
+    objectKeywords: ['document', 'paper', 'form', 'text', 'receipt'],
+    textKeywords: ['application', 'name', 'address', 'signature', 'declaration'],
   },
   {
-    keywords: ['pill', 'medicine', 'tablet', 'bottle', 'pharmaceutical', 'capsule', 'drug'],
-    intent: 'medicine_identification',
     category: 'health',
+    intent: 'medicine_label_guidance',
+    objectKeywords: ['medicine', 'tablet', 'pill', 'bottle', 'drug'],
+    textKeywords: ['dosage', 'mg', 'tablet', 'twice daily', 'warning'],
   },
   {
-    keywords: ['id card', 'passport', 'license', 'aadhaar', 'identification', 'pan card'],
-    intent: 'id_document_analysis',
     category: 'identity',
+    intent: 'identity_document_help',
+    objectKeywords: ['id card', 'passport', 'license', 'card'],
+    textKeywords: ['dob', 'name', 'id', 'passport', 'issued'],
   },
   {
-    keywords: ['food', 'meal', 'dish', 'plate', 'fruit', 'vegetable', 'cooking'],
-    intent: 'food_identification',
-    category: 'food',
-  },
-  {
-    keywords: ['building', 'house', 'road', 'bridge', 'infrastructure', 'construction'],
-    intent: 'infrastructure_analysis',
-    category: 'infrastructure',
-  },
-  {
-    keywords: ['animal', 'pet', 'dog', 'cat', 'cow', 'cattle', 'livestock'],
-    intent: 'animal_identification',
-    category: 'animal',
+    category: 'legal',
+    intent: 'legal_document_review',
+    objectKeywords: ['document', 'paper', 'letter'],
+    textKeywords: ['notice', 'legal', 'court', 'section', 'complaint'],
   },
 ];
-
-function classifyIntent(
-  labels: ImageLabel[],
-  textDetections: ImageText[],
-): { intent: string; category: string } {
-  const labelNames = labels.map((l) => l.name.toLowerCase());
-  const hasText = textDetections.filter((t) => t.type === 'LINE').length > 3;
-
-  // Score each intent rule
-  let bestScore = 0;
-  let bestIntent = 'general_image';
-  let bestCategory = 'general';
-
-  for (const rule of INTENT_RULES) {
-    const score = rule.keywords.reduce(
-      (acc, kw) => acc + (labelNames.some((l) => l.includes(kw)) ? 1 : 0),
-      0,
-    );
-    if (score > bestScore) {
-      bestScore = score;
-      bestIntent = rule.intent;
-      bestCategory = rule.category;
-    }
-  }
-
-  // If substantial text detected, lean toward document
-  if (hasText && bestScore < 2) {
-    return { intent: 'document_analysis', category: 'document' };
-  }
-
-  return { intent: bestIntent, category: bestCategory };
-}
-
-// ── Step 3: AI reasoning ──
-
-async function generateImageExplanation(
-  labels: ImageLabel[],
-  textDetections: ImageText[],
-  intent: string,
-  category: string,
-  userQuestion?: string,
-): Promise<string> {
-  const labelSummary = labels
-    .slice(0, 12)
-    .map((l) => `${l.name} (${l.confidence.toFixed(0)}%)`)
-    .join(', ');
-
-  const detectedLines = textDetections
-    .filter((t) => t.type === 'LINE')
-    .map((t) => t.text)
-    .join('\n');
-
-  const systemPrompt = `You are BUAIP Photo Analyzer — an AI that understands images through detected objects and text.
-
-You receive:
-- Object labels detected in the image (with confidence %)
-- Text extracted from the image (OCR)
-- The classified intent category
-
-Your task:
-1. Describe what the image contains based on the detected objects and text.
-2. Identify what it means in context.
-3. Provide actionable advice on what the user should do next.
-
-Be specific and helpful. If it's a crop disease, give treatment advice.
-If it's a government form, explain how to fill it. If it's medicine, explain dosage.
-If text is detected, use it in your explanation.
-
-IMPORTANT: Only use the detected objects and text provided. Do not invent details not supported by the detections.`;
-
-  const userPrompt = `## Image Analysis Results
-
-**Detected Objects:** ${labelSummary || 'None detected'}
-**Detected Category:** ${category}
-**Intent:** ${intent}
-
-${detectedLines ? `**Text Found in Image:**\n${detectedLines}` : '**Text Found:** None'}
-
-${userQuestion ? `**User Question:** ${userQuestion}` : '**No specific question — provide full explanation.**'}
-
-Explain what this image shows, what it means, and what the user should do next.`;
-
-  return await callBedrock(
-    [{ role: 'user', content: userPrompt }],
-    systemPrompt,
-    { maxTokens: 2000, temperature: 0.3 },
-  );
-}
-
-// ── Public API ──
 
 export async function analyzeImage(
   imageBuffer: Buffer,
   userQuestion?: string,
 ): Promise<ImageAnalysis> {
-  // Run Rekognition in parallel
-  const [labels, textDetections] = await Promise.all([
+  const [labels, textDetections, multimodalSummary] = await Promise.all([
     detectLabels(imageBuffer),
     detectText(imageBuffer),
+    describeImageWithMultimodalModel(imageBuffer),
   ]);
 
-  // Classify intent
-  const { intent, category } = classifyIntent(labels, textDetections);
-
-  // AI reasoning
-  const explanation = await generateImageExplanation(
-    labels,
-    textDetections,
-    intent,
-    category,
-    userQuestion,
-  );
+  const knowledge = buildStructuredKnowledge(labels, textDetections, multimodalSummary);
+  const intent = classifyIntent(knowledge);
+  const explanation = await generateGroundedExplanation(knowledge, intent, userQuestion);
 
   return {
     labels,
     textDetections,
-    detectedIntent: intent,
-    intentCategory: category,
+    sceneContext: knowledge.sceneContext,
+    detectedIntent: intent.intent,
+    intentCategory: intent.category,
     explanation,
   };
+}
+
+async function detectLabels(imageBuffer: Buffer): Promise<ImageLabel[]> {
+  const response = await rekognition.send(
+    new DetectLabelsCommand({
+      Image: { Bytes: imageBuffer },
+      MaxLabels: 24,
+      MinConfidence: 50,
+    }),
+  );
+
+  return (response.Labels || []).map((label) => ({
+    name: label.Name || '',
+    confidence: label.Confidence || 0,
+    parents: (label.Parents || []).map((parent) => parent.Name || ''),
+  }));
+}
+
+async function detectText(imageBuffer: Buffer): Promise<ImageText[]> {
+  const response = await rekognition.send(
+    new DetectTextCommand({
+      Image: { Bytes: imageBuffer },
+    }),
+  );
+
+  return (response.TextDetections || []).map((text) => ({
+    text: text.DetectedText || '',
+    confidence: text.Confidence || 0,
+    type: (text.Type as 'LINE' | 'WORD') || 'WORD',
+  }));
+}
+
+async function describeImageWithMultimodalModel(imageBuffer: Buffer): Promise<string> {
+  const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20241022-v2:0';
+
+  try {
+    const body = {
+      anthropic_version: 'bedrock-2023-05-31',
+      max_tokens: 450,
+      temperature: 0.1,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: 'image/jpeg',
+                data: imageBuffer.toString('base64'),
+              },
+            },
+            {
+              type: 'text',
+              text: 'Describe this image in 4-6 short lines with visible objects, context, and probable purpose.',
+            },
+          ],
+        },
+      ],
+    };
+
+    const response = await bedrockVisionClient.send(
+      new InvokeModelCommand({
+        modelId,
+        contentType: 'application/json',
+        accept: 'application/json',
+        body: JSON.stringify(body),
+      }),
+    );
+
+    const json = JSON.parse(new TextDecoder().decode(response.body));
+    return json?.content?.[0]?.text || '';
+  } catch {
+    return '';
+  }
+}
+
+function buildStructuredKnowledge(
+  labels: ImageLabel[],
+  textDetections: ImageText[],
+  multimodalSummary: string,
+): VisionKnowledge {
+  const objects = labels
+    .sort((a, b) => b.confidence - a.confidence)
+    .slice(0, 12)
+    .map((label) => ({ name: label.name, confidence: Math.round(label.confidence) }));
+
+  const detectedTextLines = textDetections
+    .filter((text) => text.type === 'LINE' && text.text.trim())
+    .sort((a, b) => b.confidence - a.confidence)
+    .slice(0, 16)
+    .map((text) => text.text.trim());
+
+  const parentLabels = labels.flatMap((label) => label.parents || []).filter(Boolean);
+  const sceneContext = [
+    objects.length ? `Top objects: ${objects.map((obj) => obj.name).join(', ')}` : 'Top objects: none',
+    parentLabels.length ? `Scene hints: ${Array.from(new Set(parentLabels)).join(', ')}` : '',
+    multimodalSummary ? `Multimodal summary: ${multimodalSummary}` : '',
+  ]
+    .filter(Boolean)
+    .join(' | ');
+
+  const inferredPurpose = detectedTextLines.length > 0
+    ? 'Image includes readable text and likely serves an informational or form-filling purpose.'
+    : 'Image is primarily visual and should be interpreted via object and scene context.';
+
+  return {
+    objects,
+    detectedTextLines,
+    sceneContext,
+    inferredPurpose,
+  };
+}
+
+function classifyIntent(knowledge: VisionKnowledge): { category: string; intent: string } {
+  const objectWords = knowledge.objects.map((obj) => obj.name.toLowerCase());
+  const textBlob = knowledge.detectedTextLines.join(' ').toLowerCase();
+  const sceneBlob = `${knowledge.sceneContext} ${knowledge.inferredPurpose}`.toLowerCase();
+
+  let best = { category: 'general', intent: 'general_visual_analysis' };
+  let bestScore = 0;
+
+  for (const rule of INTENT_RULES) {
+    const objectScore = rule.objectKeywords.reduce(
+      (sum, keyword) => sum + (objectWords.some((word) => word.includes(keyword)) ? 2 : 0),
+      0,
+    );
+
+    const textScore = rule.textKeywords.reduce(
+      (sum, keyword) => sum + (textBlob.includes(keyword) || sceneBlob.includes(keyword) ? 1 : 0),
+      0,
+    );
+
+    const totalScore = objectScore + textScore;
+    if (totalScore > bestScore) {
+      bestScore = totalScore;
+      best = { category: rule.category, intent: rule.intent };
+    }
+  }
+
+  return best;
+}
+
+async function generateGroundedExplanation(
+  knowledge: VisionKnowledge,
+  intent: { category: string; intent: string },
+  userQuestion?: string,
+): Promise<string> {
+  const systemPrompt = `You are a vision explainer.
+
+Use only the provided structured signals.
+Do not invent unseen details.
+Return valid JSON only.
+
+JSON schema:
+{
+  "whatImageShows": "string",
+  "whatItMeans": "string",
+  "nextActions": ["string"],
+  "confidence": "high|medium|low"
+}`;
+
+  const userPrompt = `Structured image knowledge:
+${JSON.stringify(
+    {
+      intent,
+      objects: knowledge.objects,
+      detectedTextLines: knowledge.detectedTextLines,
+      sceneContext: knowledge.sceneContext,
+      inferredPurpose: knowledge.inferredPurpose,
+      userQuestion: userQuestion || null,
+    },
+    null,
+    2,
+  )}`;
+
+  const raw = await callBedrock(
+    [{ role: 'user', content: userPrompt }],
+    systemPrompt,
+    { maxTokens: 1400, temperature: 0.1 },
+  );
+
+  const structured = parseJsonFromModel<VisionResponseModel>(raw);
+  if (!structured) {
+    const actions = buildCategoryFallbackActions(intent.category);
+    return [
+      'What the image shows',
+      knowledge.sceneContext || 'Visual objects were detected, but summary confidence is limited.',
+      '',
+      'What it means',
+      knowledge.inferredPurpose,
+      '',
+      'What you should do next',
+      ...actions.map((action) => `- ${action}`),
+    ].join('\n');
+  }
+
+  return [
+    'What the image shows',
+    structured.whatImageShows,
+    '',
+    'What it means',
+    structured.whatItMeans,
+    '',
+    'What you should do next',
+    ...(structured.nextActions || []).map((action) => `- ${action}`),
+    '',
+    `Confidence: ${structured.confidence || 'medium'}`,
+  ].join('\n');
+}
+
+function buildCategoryFallbackActions(category: string): string[] {
+  if (category === 'agriculture') {
+    return [
+      'Inspect affected crop area closely and capture 2-3 clearer photos of leaves and stems.',
+      'Record when symptoms started and whether recent rain or pests were observed.',
+      'Consult local agriculture extension support with these visual notes for treatment confirmation.',
+    ];
+  }
+
+  if (category === 'document' || category === 'legal' || category === 'identity') {
+    return [
+      'Review all visible fields and verify names, dates, and ID values exactly.',
+      'Keep a scanned copy before submission and cross-check required attachments.',
+      'Ask a follow-up question with the exact field you want clarified.',
+    ];
+  }
+
+  if (category === 'health') {
+    return [
+      'Read dosage text carefully and verify with a qualified doctor or pharmacist.',
+      'Check expiry date and warning labels before use.',
+      'Do not self-medicate if label details are unclear.',
+    ];
+  }
+
+  return [
+    'Provide a clearer photo if you need higher-confidence interpretation.',
+    'Ask a specific follow-up question about one part of the image.',
+    'Use extracted text and visible objects as the primary evidence for any decision.',
+  ];
+}
+
+function parseJsonFromModel<T>(text: string): T | null {
+  const direct = tryJsonParse<T>(text);
+  if (direct) {
+    return direct;
+  }
+
+  const fenced = text.match(/```json\s*([\s\S]*?)\s*```/i);
+  if (fenced?.[1]) {
+    const parsed = tryJsonParse<T>(fenced[1]);
+    if (parsed) {
+      return parsed;
+    }
+  }
+
+  const objectMatch = text.match(/\{[\s\S]*\}/);
+  if (objectMatch?.[0]) {
+    return tryJsonParse<T>(objectMatch[0]);
+  }
+
+  return null;
+}
+
+function tryJsonParse<T>(text: string): T | null {
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
 }

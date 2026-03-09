@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFileSync } from "fs";
 import { join } from "path";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 interface Scheme {
   scheme_name: string;
   domain: string;

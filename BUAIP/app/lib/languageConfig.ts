@@ -119,6 +119,23 @@ export function getDisplayLanguageName(code: SupportedLanguageCode): string {
   return getLanguageOption(code).label;
 }
 
+export function getLocalizedDisplayLanguageName(
+  code: SupportedLanguageCode,
+  uiLanguage: SupportedLanguageCode,
+): string {
+  if (typeof Intl === 'undefined' || typeof (Intl as any).DisplayNames !== 'function') {
+    return getDisplayLanguageName(code);
+  }
+
+  try {
+    const displayNames = new Intl.DisplayNames([uiLanguage], { type: 'language' });
+    const localized = displayNames.of(code);
+    return localized || getDisplayLanguageName(code);
+  } catch {
+    return getDisplayLanguageName(code);
+  }
+}
+
 export function getAwsTranslateTargetCode(code: SupportedLanguageCode): string {
   const option = getLanguageOption(code);
   return option.fallbackAwsTranslateCode || option.awsTranslateCode;

@@ -28,7 +28,11 @@ const CONFIG = {
 
   // External API keys (set via environment or SSM)
   dataGovApiKey: process.env.DATA_GOV_IN_API_KEY || "",
-  openWeatherApiKey: process.env.OPENWEATHER_API_KEY || "",
+  openWeatherApiKey:
+    process.env.OPENWEATHER_API_KEY ||
+    process.env.WEATHER ||
+    process.env.weather ||
+    "",
 
   // Bedrock model
   bedrockModelId:

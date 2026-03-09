@@ -10,6 +10,7 @@ import {
 } from "@/app/lib/languageConfig";
 import {
   preloadUITranslations,
+  preloadPriorityUITranslations,
   loadUITranslationsFromStorage,
 } from "@/app/lib/runtimeUITranslation";
 
@@ -48,25 +49,58 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   // Preload translations when language changes
   useEffect(() => {
+    let isCancelled = false;
+
     if (!language || language === "en") {
       setTranslationsReady(true);
-      return;
+      return () => {
+        isCancelled = true;
+      };
     }
 
-    setTranslationsReady(false);
+    // For non-English languages with static dictionaries, mark ready immediately
+    if (language in translations) {
+      setTranslationsReady(true);
+      return () => {
+        isCancelled = true;
+      };
+    }
 
-    // Load from localStorage first (synchronous) to reduce untranslated flashes.
-    loadUITranslationsFromStorage(language);
+    // For runtime-translated languages (like German), wait for priority translations
+    // This ensures the AI menu and key UI elements are translated before showing
+    async function loadPriorityTranslations() {
+      setTranslationsReady(false);
 
-    // Preload missing keys (including missing keys in static dictionaries).
-    preloadUITranslations(language)
-      .then(() => {
-        // Force a re-render to show newly loaded translations.
-        setRuntimeCache(new Map());
-      })
-      .finally(() => {
-        setTranslationsReady(true);
-      });
+      // Load from localStorage first (synchronous)
+      loadUITranslationsFromStorage(language);
+      setRuntimeCache(new Map());
+
+      // Preload ONLY priority keys (wait for them)
+      await preloadPriorityUITranslations(language)
+        .then(() => {
+          if (isCancelled) return;
+          // Force a re-render to show newly loaded translations
+          setRuntimeCache(new Map());
+          setTranslationsReady(true);
+
+          // Continue preloading remaining keys in background (don't wait)
+          void preloadUITranslations(language).then(() => {
+            if (isCancelled) return;
+            setRuntimeCache(new Map());
+          });
+        })
+        .catch((error) => {
+          console.error("Failed to preload priority translations:", error);
+          // Even if preload fails, mark as ready so UI isn't blocked
+          setTranslationsReady(true);
+        });
+    }
+
+    void loadPriorityTranslations();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [language]);
 
   const setLanguage = (lang: Language) => {

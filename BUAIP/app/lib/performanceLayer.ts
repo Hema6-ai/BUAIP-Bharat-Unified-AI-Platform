@@ -55,10 +55,8 @@ const GREETING_PATTERNS = [
   /^(thanks?|thank\s+you|dhanyavaad|shukriya)[\s!.]*$/i,
 ];
 
-const GREETING_RESPONSES: Record<string, string> = {
-  en: "Hello! I'm BUAIP, your AI assistant for government schemes, agriculture, careers, legal rights, and more. How can I help you today?",
-  hi: "नमस्ते! मैं BUAIP हूँ, सरकारी योजनाओं, कृषि, करियर, कानूनी अधिकारों आदि के लिए आपका AI सहायक। आज मैं आपकी कैसे मदद कर सकता हूँ?",
-};
+const DEFAULT_GREETING_RESPONSE =
+  "Hello! I'm BUAIP, your AI assistant for government schemes, agriculture, careers, legal rights, and more. How can I help you today?";
 
 const TIME_PATTERNS = [
   /^what('s| is) the (current )?(time|clock)/i,
@@ -85,7 +83,7 @@ export function tryAnswerLocally(message: string, lang: string): LocalAnswer {
     if (pattern.test(trimmed)) {
       return {
         handled: true,
-        response: GREETING_RESPONSES[lang] || GREETING_RESPONSES.en,
+        response: DEFAULT_GREETING_RESPONSE,
         engine: 'Local Quick Response',
       };
     }

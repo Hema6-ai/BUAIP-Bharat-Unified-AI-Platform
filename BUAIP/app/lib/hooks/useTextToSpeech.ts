@@ -11,6 +11,13 @@ export interface UseTTSReturn {
   error: string | null;
 }
 
+const TTS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface CachedAudio {
+  blob: Blob;
+  createdAt: number;
+}
+
 /**
  * Strip markdown / symbols so the spoken text sounds natural.
  */
@@ -88,11 +95,13 @@ function speakWithBrowser(
  * Hook for text-to-speech: AWS Polly (female voice) with browser fallback
  */
 export function useTextToSpeech(): UseTTSReturn {
-  const { language, translate } = useLanguage();
+  const { language } = useLanguage();
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const usingBrowserRef = useRef(false);
+  const audioCacheRef = useRef<Map<string, CachedAudio>>(new Map());
+  const inFlightRef = useRef<Map<string, Promise<Blob>>>(new Map());
 
   // Pre-load browser voices (they load async in some browsers)
   useEffect(() => {
@@ -124,25 +133,33 @@ export function useTextToSpeech(): UseTTSReturn {
     usingBrowserRef.current = false;
 
     const cleanText = cleanTextForSpeech(text);
+    const cacheKey = `${language}:${cleanText}`;
 
-    try {
-      // Try AWS Polly first
-      const response = await fetch('/api/text-to-speech', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: cleanText, languageCode: language }),
+    const getCachedBlob = (): Blob | null => {
+      const entry = audioCacheRef.current.get(cacheKey);
+      if (!entry) return null;
+      if (Date.now() - entry.createdAt > TTS_CACHE_TTL_MS) {
+        audioCacheRef.current.delete(cacheKey);
+        return null;
+      }
+      return entry.blob;
+    };
+
+    const setCachedBlob = (blob: Blob): void => {
+      audioCacheRef.current.set(cacheKey, {
+        blob,
+        createdAt: Date.now(),
       });
-
-      if (!response.ok) {
-        throw new Error(`Polly API returned ${response.status}`);
+      if (audioCacheRef.current.size > 100) {
+        const oldest = audioCacheRef.current.keys().next().value;
+        if (oldest) {
+          audioCacheRef.current.delete(oldest);
+        }
       }
+    };
 
-      const audioBlob = await response.blob();
-      if (audioBlob.size < 100) {
-        throw new Error('Polly returned empty audio');
-      }
-
-      const audioUrl = URL.createObjectURL(audioBlob);
+    const playBlob = async (blob: Blob): Promise<void> => {
+      const audioUrl = URL.createObjectURL(blob);
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
 
@@ -153,7 +170,6 @@ export function useTextToSpeech(): UseTTSReturn {
 
       audio.onerror = () => {
         URL.revokeObjectURL(audioUrl);
-        // If Polly audio fails to play, fallback to browser
         console.warn('[TTS] Polly audio playback failed, using browser fallback');
         usingBrowserRef.current = true;
         speakWithBrowser(cleanText, language, () => setIsPlaying(false), (msg) => {
@@ -163,7 +179,49 @@ export function useTextToSpeech(): UseTTSReturn {
       };
 
       await audio.play();
+    };
+
+    const cachedBlob = getCachedBlob();
+    if (cachedBlob) {
+      try {
+        await playBlob(cachedBlob);
+        return;
+      } catch {
+        // Fallback to network request below.
+      }
+    }
+
+    try {
+      const existing = inFlightRef.current.get(cacheKey);
+      const requestPromise = existing || (async () => {
+        const response = await fetch('/api/text-to-speech', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: cleanText, languageCode: language }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Polly API returned ${response.status}`);
+        }
+
+        return await response.blob();
+      })();
+
+      if (!existing) {
+        inFlightRef.current.set(cacheKey, requestPromise);
+      }
+
+      const audioBlob = await requestPromise;
+      inFlightRef.current.delete(cacheKey);
+
+      if (audioBlob.size < 100) {
+        throw new Error('Polly returned empty audio');
+      }
+
+      setCachedBlob(audioBlob);
+      await playBlob(audioBlob);
     } catch (err) {
+      inFlightRef.current.delete(cacheKey);
       console.warn('[TTS] AWS Polly failed, using browser speech fallback:', err);
       // Fallback to browser Web Speech API
       usingBrowserRef.current = true;

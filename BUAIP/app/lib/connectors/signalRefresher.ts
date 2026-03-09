@@ -274,11 +274,17 @@ export function getSchedulerStatus(): {
  * Call this in your app initialization
  */
 if (typeof window === 'undefined') {
-  // Server-side only
-  setTimeout(() => {
-    // Delay start to allow other services to initialize
-    startSignalScheduler().catch((error) => {
-      console.error('[SignalScheduler] Failed to start:', error);
-    });
-  }, 5000); // 5 second delay
+  const isBuildPhase =
+    process.env.NEXT_PHASE === 'phase-production-build' ||
+    process.env.npm_lifecycle_event === 'build';
+  const shouldAutoStart = process.env.ENABLE_SIGNAL_SCHEDULER === 'true';
+
+  if (shouldAutoStart && !isBuildPhase) {
+    setTimeout(() => {
+      // Delay start to allow other services to initialize.
+      startSignalScheduler().catch((error) => {
+        console.error('[SignalScheduler] Failed to start:', error);
+      });
+    }, 5000);
+  }
 }

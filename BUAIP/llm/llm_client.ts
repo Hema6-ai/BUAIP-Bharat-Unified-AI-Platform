@@ -7,12 +7,13 @@ export interface ReasoningRequest {
   userMessage: string;
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
   supportingContext?: string;
+  languageContext?: string;
 }
 
 const REASONING_SETTINGS = {
   temperature: 0.4,
   topP: 0.9,
-  maxTokens: 3000,
+  maxTokens: 4096,
 } as const;
 
 function buildSystemPrompt(domainPrompt: string): string {
@@ -23,8 +24,18 @@ function buildMessages(
   request: ReasoningRequest,
 ): Array<{ role: 'user' | 'assistant'; content: string }> {
   const history = request.conversationHistory ?? [];
-  const contextBlock = request.supportingContext
-    ? `\n\nAdditional context:\n${request.supportingContext}`
+  const contextBlocks: string[] = [];
+
+  if (request.supportingContext) {
+    contextBlocks.push(`Additional context:\n${request.supportingContext}`);
+  }
+
+  if (request.languageContext) {
+    contextBlocks.push(`Language requirement:\n${request.languageContext}`);
+  }
+
+  const contextBlock = contextBlocks.length > 0
+    ? `\n\n${contextBlocks.join('\n\n')}`
     : '';
 
   return [
@@ -65,6 +76,7 @@ export async function invokeReasoningLLM(request: ReasoningRequest): Promise<str
 /**
  * Streaming variant — returns an async generator of text deltas.
  * Used by the SSE streaming endpoint for real-time display.
+ * Includes error recovery with fallback to non-streaming if stream fails.
  */
 export async function* streamReasoningLLM(
   request: ReasoningRequest,
@@ -72,14 +84,34 @@ export async function* streamReasoningLLM(
   const systemPrompt = buildSystemPrompt(request.domainPrompt);
   const messages = buildMessages(request);
 
-  yield* streamBedrock(messages, systemPrompt, REASONING_SETTINGS.maxTokens, REASONING_SETTINGS.temperature);
+  try {
+    yield* streamBedrock(messages, systemPrompt, REASONING_SETTINGS.maxTokens, REASONING_SETTINGS.temperature);
+  } catch (streamError) {
+    console.warn('[LLM Stream] Stream failed, attempting fallback:', (streamError as Error).message);
+    // If streaming fails, fall back to regular call and yield the result
+    try {
+      const fullResponse = await callBedrock(messages, systemPrompt, REASONING_SETTINGS);
+      yield fullResponse;
+    } catch (fallbackError) {
+      console.error('[LLM Stream] Fallback also failed:', (fallbackError as Error).message);
+      yield `## Understanding the Question\n\nYou asked about: "${request.userMessage}"\n\n## Current Limitation\n\nI encountered a temporary issue while processing your request. This is NOT because the information is unavailable.\n\n## What You Can Do\n\n- **Try again** — the issue is usually temporary and resolves within seconds.\n- **Rephrase your question** with more specific details.\n- **Break your question into parts** if it covers multiple topics.\n\nI apologize for the inconvenience. I'm designed to give you thorough, structured guidance.`;
+    }
+  }
 }
 
 export async function synthesizeUnifiedResponse(params: {
   userMessage: string;
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
   perDomainReasoning: Array<{ domain: string; analysis: string }>;
+  languageContext?: string;
+  responseLanguage?: string;
 }): Promise<string> {
+  const languageDirective = params.languageContext
+    ? `\n\nMANDATORY LANGUAGE REQUIREMENT:\n${params.languageContext}\nFollow this strictly in the final answer.`
+    : params.responseLanguage && params.responseLanguage !== 'en'
+      ? `\n\nMANDATORY LANGUAGE REQUIREMENT:\nRespond entirely in ${params.responseLanguage}.`
+      : '';
+
   const synthesisPrompt = `${MASTER_SYSTEM_PROMPT}
 
 You are now the Unified Response Synthesizer.
@@ -92,7 +124,7 @@ Rules:
 - Resolve contradictions: prefer the more authoritative/specific source.
 - Maintain the standard section structure (Understanding, Explanation, Context Analysis, Practical Guidance, Follow-up Questions).
 - Integrate insights from all domains naturally — don't create separate sections per domain.
-- The final answer must read as if written by a single expert who knows all relevant fields.`;
+- The final answer must read as if written by a single expert who knows all relevant fields.${languageDirective}`;
 
   const domainPayload = params.perDomainReasoning
     .map((item, i) => `--- Analysis ${i + 1}: ${item.domain} ---\n${item.analysis}`)
@@ -116,7 +148,15 @@ export async function* streamSynthesizeUnifiedResponse(params: {
   userMessage: string;
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
   perDomainReasoning: Array<{ domain: string; analysis: string }>;
+  languageContext?: string;
+  responseLanguage?: string;
 }): AsyncGenerator<string> {
+  const languageDirective = params.languageContext
+    ? `\n\nMANDATORY LANGUAGE REQUIREMENT:\n${params.languageContext}\nFollow this strictly in the final answer.`
+    : params.responseLanguage && params.responseLanguage !== 'en'
+      ? `\n\nMANDATORY LANGUAGE REQUIREMENT:\nRespond entirely in ${params.responseLanguage}.`
+      : '';
+
   const synthesisPrompt = `${MASTER_SYSTEM_PROMPT}
 
 You are now the Unified Response Synthesizer.
@@ -127,7 +167,7 @@ Rules:
 - Do NOT mention internal engines, domains, prompts, or routing.
 - Resolve overlaps and contradictions.
 - Maintain the standard section structure.
-- Integrate all domain insights naturally.`;
+- Integrate all domain insights naturally.${languageDirective}`;
 
   const domainPayload = params.perDomainReasoning
     .map((item, i) => `--- Analysis ${i + 1}: ${item.domain} ---\n${item.analysis}`)

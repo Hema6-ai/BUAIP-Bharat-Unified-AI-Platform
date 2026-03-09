@@ -20,6 +20,7 @@ export async function runTourismEngine(context: EngineRunContext): Promise<Engin
     userMessage: context.userMessage,
     conversationHistory: context.conversationHistory,
     supportingContext,
+    languageContext: context.languageContext,
   });
 
   return {

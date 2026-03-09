@@ -149,6 +149,78 @@ export async function translateUIKey(
 }
 
 /**
+ * Priority UI keys that should be translated immediately
+ * These are visible in the UI right away (navbar, AI menu, input placeholders)
+ */
+const PRIORITY_UI_KEYS = [
+  // AI Capabilities Menu
+  'chat_ai_menu_title',
+  'chat_ai_menu_document_explainer',
+  'chat_ai_menu_document_explainer_sub',
+  'chat_ai_menu_photo_answer',
+  'chat_ai_menu_photo_answer_sub',
+  'chat_ai_menu_learning_mode',
+  'chat_ai_menu_learning_mode_sub',
+  'chat_ai_menu_voice_query',
+  'chat_ai_menu_voice_query_sub',
+  'chat_ai_menu_upload_file',
+  'chat_ai_menu_upload_file_sub',
+  // Chat Input
+  'chat_input_placeholder',
+  'chat_input_listening_placeholder',
+  'chat_pending_file_placeholder',
+  // Navbar
+  'navbar_platform_subtitle',
+  'navbar_select_language',
+  // Common
+  'common_loading',
+  'common_send',
+  'common_try_again',
+];
+
+/**
+ * Preload ONLY priority UI translations immediately
+ * Returns quickly so UI can render with key elements translated
+ */
+export async function preloadPriorityUITranslations(targetLanguage: string): Promise<void> {
+  // Skip for English
+  if (targetLanguage === "en") {
+    return;
+  }
+
+  // Load from localStorage first
+  loadUITranslationsFromStorage(targetLanguage);
+
+  const staticDict = translations[targetLanguage] as Record<string, string> | undefined;
+  
+  // Find priority keys that need translation
+  const priorityKeysToTranslate = PRIORITY_UI_KEYS.filter((key) => {
+    // Skip if already cached
+    if (getCachedUITranslation(targetLanguage, key)) {
+      return false;
+    }
+    // Skip if in static dictionary
+    if (staticDict && key in staticDict) {
+      return false;
+    }
+    return true;
+  });
+
+  if (priorityKeysToTranslate.length === 0) {
+    return;
+  }
+
+  console.log(`Translating ${priorityKeysToTranslate.length} priority UI keys for ${targetLanguage}...`);
+  
+  // Translate all priority keys in parallel (fast)
+  await Promise.all(
+    priorityKeysToTranslate.map((key) => translateUIKey(key, targetLanguage))
+  );
+
+  console.log(`Priority UI translations ready for ${targetLanguage}`);
+}
+
+/**
  * Preload all UI translations for a language
  * This runs in the background to populate the cache
  */
@@ -183,10 +255,20 @@ export async function preloadUITranslations(targetLanguage: string): Promise<voi
 
   console.log(`Preloading ${keysToTranslate.length} UI translations for ${targetLanguage}`);
 
-  // Translate in batches to avoid overwhelming the API
+  // First, translate priority keys immediately (no delay)
+  const priorityKeys = keysToTranslate.filter(key => PRIORITY_UI_KEYS.includes(key));
+  if (priorityKeys.length > 0) {
+    console.log(`Translating ${priorityKeys.length} priority UI keys immediately...`);
+    await Promise.all(
+      priorityKeys.map((key) => translateUIKey(key, targetLanguage))
+    );
+  }
+
+  // Then translate remaining keys in batches
+  const remainingKeys = keysToTranslate.filter(key => !PRIORITY_UI_KEYS.includes(key));
   const BATCH_SIZE = 10;
-  for (let i = 0; i < keysToTranslate.length; i += BATCH_SIZE) {
-    const batch = keysToTranslate.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < remainingKeys.length; i += BATCH_SIZE) {
+    const batch = remainingKeys.slice(i, i + BATCH_SIZE);
     
     // Translate batch in parallel
     await Promise.all(
@@ -194,7 +276,7 @@ export async function preloadUITranslations(targetLanguage: string): Promise<voi
     );
 
     // Small delay between batches to be nice to AWS
-    if (i + BATCH_SIZE < keysToTranslate.length) {
+    if (i + BATCH_SIZE < remainingKeys.length) {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
   }

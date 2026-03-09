@@ -11,29 +11,22 @@
 
 import {
   hasUploadedContent,
-  getLastDocument,
-  getLastImageAnalysis,
-  getLearningState,
 } from '@/app/lib/ai-capabilities/sessionMemory';
-import { answerDocumentQuestion } from '@/app/lib/ai-capabilities/documentProcessor';
-import { continueLearning } from '@/app/lib/ai-capabilities/learningMode';
+import { handleDocumentCapability } from '@/capabilities/document_ai';
+import { handlePhotoCapability } from '@/capabilities/photo_ai';
+import { handleLearningCapability } from '@/capabilities/learning_ai';
+import { handleVoiceCapability } from '@/capabilities/voice_ai';
+import { handleFileUploadCapability } from '@/capabilities/file_upload_ai';
+import { handleNormalChatCapability } from '@/capabilities/normal_chat';
 
 // ── Types ──
 
 export interface CapabilityResult {
   handled: boolean;
   response?: string;
-  capability?: 'document_ai' | 'photo_ai' | 'learning_ai' | 'voice_ai';
+  capability?: 'document_ai' | 'photo_ai' | 'learning_ai' | 'voice_ai' | 'file_upload_ai' | 'normal_chat';
   meta?: Record<string, unknown>;
 }
-
-// ── Keyword patterns ──
-
-const DOC_KEYWORDS =
-  /\b(document|file|uploaded|pdf|summary|section|page|paragraph|clause|benefits?|eligib|deadline|requirement|apply|attached|report)\b/i;
-
-const IMAGE_KEYWORDS =
-  /\b(image|photo|picture|uploaded|what is this|what does this|identify|recognize|show|crop disease|pest|insect|deficiency|plant|leaf)\b/i;
 
 // ── Public API ──
 
@@ -51,71 +44,40 @@ export async function routeCapability(
   userMessage: string,
   sessionId: string | undefined,
 ): Promise<CapabilityResult> {
-  if (!sessionId) return { handled: false };
+  const hasSessionUpload = sessionId ? hasUploadedContent(sessionId) : false;
 
-  // ── 1. Learning mode (highest priority — student is in a learning loop) ──
-  const learningState = getLearningState(sessionId);
-  if (learningState) {
-    try {
-      const result = await continueLearning(userMessage, learningState);
-      // Session memory is already updated inside continueLearning — the
-      // ai-capabilities route handles setLearningState; here we just return.
-      return {
-        handled: true,
-        response: result.response,
-        capability: 'learning_ai',
-        meta: {
-          topic: learningState.topic,
-          level: result.state.level,
-          questionsAsked: result.state.questionsAsked,
-          isComplete: result.isComplete,
-        },
-      };
-    } catch (err) {
-      console.error('[CapabilityRouter] Learning mode error:', err);
-      // Fall through to domain router on failure
+  if (sessionId) {
+    // 1. Active learning session (highest priority)
+    const learningResult = await handleLearningCapability(userMessage, sessionId);
+    if (learningResult.handled) {
+      return learningResult;
     }
-  }
 
-  // Only check uploads if session has content
-  if (!hasUploadedContent(sessionId)) return { handled: false };
+    // Check upload-dependent capabilities only when there is uploaded session content.
+    if (hasSessionUpload) {
+      const documentResult = await handleDocumentCapability(userMessage, sessionId);
+      if (documentResult.handled) {
+        return documentResult;
+      }
 
-  // ── 2. Document follow-up ──
-  if (DOC_KEYWORDS.test(userMessage)) {
-    const doc = getLastDocument(sessionId);
-    if (doc) {
-      try {
-        const answer = await answerDocumentQuestion(doc, userMessage);
-        return {
-          handled: true,
-          response: answer,
-          capability: 'document_ai',
-          meta: { documentName: doc.fileName },
-        };
-      } catch (err) {
-        console.error('[CapabilityRouter] Document Q&A error:', err);
+      const photoResult = await handlePhotoCapability(userMessage, sessionId);
+      if (photoResult.handled) {
+        return photoResult;
       }
     }
+
   }
 
-  // ── 3. Image follow-up ──
-  if (IMAGE_KEYWORDS.test(userMessage)) {
-    const img = getLastImageAnalysis(sessionId);
-    if (img) {
-      // The image has already been analyzed — return a contextual summary.
-      // Deeper image reasoning happens via the ai-capabilities multipart route.
-      return {
-        handled: true,
-        response: img.explanation,
-        capability: 'photo_ai',
-        meta: {
-          detectedIntent: img.detectedIntent,
-          intentCategory: img.intentCategory,
-          labels: img.labels.map((l) => l.name).join(', '),
-        },
-      };
-    }
+  // Ask user to upload a file when relevant keywords appear but session has no uploads.
+  const fileUploadResult = await handleFileUploadCapability(userMessage, hasSessionUpload);
+  if (fileUploadResult.handled) {
+    return fileUploadResult;
   }
 
-  return { handled: false };
+  const voiceResult = await handleVoiceCapability(userMessage);
+  if (voiceResult.handled) {
+    return voiceResult;
+  }
+
+  return handleNormalChatCapability();
 }

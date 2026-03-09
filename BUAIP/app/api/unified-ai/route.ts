@@ -3,6 +3,7 @@ import { runSuperRouter } from '@/router/super_router';
 import { routeCapability } from '@/router/capability_router';
 import { getFactsContextForQuery } from '@/app/lib/factsVectorStore';
 import { resolveDeterministicFactQuery } from '@/app/lib/realTimeDataService';
+import { getLiveWebContextForQuery } from '@/app/lib/liveWebLookupService';
 import {
   runCanonicalInputPipeline,
   runCanonicalOutputPipeline,
@@ -14,6 +15,9 @@ import {
   setCachedResult,
   tryAnswerLocally,
 } from '@/app/lib/performanceLayer';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 interface UnifiedAIRequest {
   userMessage: string;
@@ -807,6 +811,44 @@ export async function POST(request: NextRequest) {
       selectedLanguage = 'en',
     } = body;
     selectedLanguageForError = selectedLanguage;
+
+    if (!userMessage || !userMessage.trim()) {
+      const localizedError = await runCanonicalOutputPipeline({
+        englishText: 'Please enter your message before sending.',
+        targetLanguage: normalizeUserLanguage(selectedLanguage),
+      });
+
+      return NextResponse.json(
+        { error: localizedError.localizedText },
+        { status: 400 }
+      );
+    }
+
+    const normalizedSelectedLanguage = normalizeUserLanguage(selectedLanguage);
+    const quickLocalAnswer = tryAnswerLocally(userMessage.trim(), normalizedSelectedLanguage);
+    if (quickLocalAnswer.handled && quickLocalAnswer.response) {
+      const localizedQuickAnswer = await runCanonicalOutputPipeline({
+        englishText: quickLocalAnswer.response,
+        targetLanguage: normalizedSelectedLanguage,
+      });
+
+      return NextResponse.json({
+        response: localizedQuickAnswer.localizedText,
+        engine: quickLocalAnswer.engine || 'Local Quick Response',
+        intent: 'local_quick',
+        confidence: 1,
+        language: normalizedSelectedLanguage,
+        canonicalLanguage: 'en',
+        cacheHit: false,
+      });
+    }
+
+    const rawInputHash = hashQuery(userMessage, normalizedSelectedLanguage);
+    const rawCached = getCachedResult(rawInputHash);
+    if (rawCached) {
+      return NextResponse.json({ ...rawCached, cacheHit: true, cacheLayer: 'raw' });
+    }
+
     const canonicalInput = await runCanonicalInputPipeline({
       text: userMessage,
       selectedLanguage,
@@ -857,21 +899,10 @@ export async function POST(request: NextRequest) {
       if (qHash) {
         setCachedResult(qHash, jsonBody);
       }
+      setCachedResult(rawInputHash, jsonBody);
 
       return NextResponse.json(jsonBody);
     };
-
-    if (!userMessage || !userMessage.trim()) {
-      const localizedError = await runCanonicalOutputPipeline({
-        englishText: 'Please enter your message before sending.',
-        targetLanguage: normalizeUserLanguage(selectedLanguage),
-      });
-
-      return NextResponse.json(
-        { error: localizedError.localizedText },
-        { status: 400 }
-      );
-    }
 
     const normalizedUserMessage = canonicalInput.englishText?.trim() || userMessage.trim();
 
@@ -908,12 +939,17 @@ export async function POST(request: NextRequest) {
     }
 
     // ── PARALLEL: fact resolution + vector facts lookup ──
-    const [factualResult, factsContext] = await Promise.all([
+    const [factualResult, factsContext, webContext] = await Promise.all([
       resolveDeterministicFactQuery(normalizedUserMessage),
       getFactsContextForQuery(normalizedUserMessage),
+      getLiveWebContextForQuery(normalizedUserMessage),
     ]);
 
-    if (factualResult.handled && factualResult.response) {
+    const hasWebContext = Boolean(webContext.summary);
+    const shouldBypassUnavailableRealtime =
+      factualResult.factType === 'unavailable_realtime' && hasWebContext;
+
+    if (factualResult.handled && factualResult.response && !shouldBypassUnavailableRealtime) {
       const resp = await buildLocalizedResponse({
         response: factualResult.response,
         engine: 'Real-Time Fact Engine',
@@ -926,6 +962,10 @@ export async function POST(request: NextRequest) {
 
     const factsPromptContext = factsContext.summary
       ? `\n\nVERIFIED FACT CONTEXT (Vector Retrieval):\n${factsContext.summary}`
+      : '';
+
+    const liveWebPromptContext = webContext.summary
+      ? `\n\nLIVE WEB CONTEXT (Web Lookup):\n${webContext.summary}`
       : '';
 
     // ========================================================================
@@ -942,7 +982,7 @@ export async function POST(request: NextRequest) {
         userMessage: normalizedUserMessage,
         origin: request.nextUrl.origin,
         conversationHistory,
-        profileSummary: `${formatProfileForAI(superSession.profile)}${factsPromptContext}`,
+        profileSummary: `${formatProfileForAI(superSession.profile)}${factsPromptContext}${liveWebPromptContext}`,
         // Language context for multilingual support with override capability
         selectedLanguage: canonicalInput.requestedLanguage,
         responseLanguage: canonicalInput.responseLanguage,

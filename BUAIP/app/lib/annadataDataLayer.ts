@@ -542,7 +542,12 @@ async function fetchWeatherForecast(state: string): Promise<WeatherForecastData 
     if (!coords) return null;
 
     // Real OpenWeather API (free tier)
-    const openWeatherKey = process.env.OPENWEATHER_API_KEY || "demo_key";
+    const openWeatherKey =
+      process.env.OPENWEATHER_API_KEY ||
+      process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY ||
+      process.env.WEATHER ||
+      process.env.weather ||
+      "demo_key";
     const weatherUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${coords.lat}&lon=${coords.lon}&appid=${openWeatherKey}&units=metric`;
 
     const response = await fetch(weatherUrl, {

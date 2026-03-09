@@ -47,6 +47,18 @@ export interface CanonicalOutputPipelineResult {
   warning?: string;
 }
 
+function looksLikelyEnglish(text: string): boolean {
+  const normalized = (text || '').trim();
+  if (!normalized) {
+    return true;
+  }
+
+  // Fast heuristic: ASCII-heavy text with Latin letters is treated as English input.
+  const hasLatinLetters = /[a-zA-Z]/.test(normalized);
+  const hasNonAscii = /[^\x00-\x7F]/.test(normalized);
+  return hasLatinLetters && !hasNonAscii;
+}
+
 async function runTranslate(
   text: string,
   sourceLanguageCode: string,
@@ -138,6 +150,22 @@ export async function runCanonicalInputPipeline(params: {
   const languageContext = overrideResult.hasOverride
     ? buildLanguageOverrideContext(requestedLanguage, responseLanguage)
     : buildNormalLanguageInstruction(requestedLanguage);
+
+  if (looksLikelyEnglish(baseQueryForProcessing)) {
+    return {
+      englishText: baseQueryForProcessing,
+      requestedLanguage,
+      responseLanguage,
+      detectedLanguage: DEFAULT_LANGUAGE_CODE,
+      detectionScore: 0.99,
+      inputTranslated: false,
+      inputTranslationCacheHit: false,
+      hasLanguageOverride: overrideResult.hasOverride,
+      overrideLanguage: overrideResult.overrideLanguage,
+      baseQuery: overrideResult.hasOverride ? baseQueryForProcessing : undefined,
+      languageContext,
+    };
+  }
 
   if (detectedLanguage === DEFAULT_LANGUAGE_CODE) {
     return {

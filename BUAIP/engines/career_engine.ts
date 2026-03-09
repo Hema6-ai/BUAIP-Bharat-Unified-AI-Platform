@@ -20,6 +20,7 @@ export async function runCareerEngine(context: EngineRunContext): Promise<Engine
     userMessage: context.userMessage,
     conversationHistory: context.conversationHistory,
     supportingContext,
+    languageContext: context.languageContext,
   });
 
   return {

@@ -47,7 +47,7 @@ export async function callBedrock(
 
   const body: any = {
     anthropic_version: "bedrock-2023-05-31",
-    max_tokens: options?.maxTokens ?? 3000,
+    max_tokens: options?.maxTokens ?? 4096,
     temperature: options?.temperature ?? 0.3,
     top_p: options?.topP ?? 0.9,
     messages: finalMessages,

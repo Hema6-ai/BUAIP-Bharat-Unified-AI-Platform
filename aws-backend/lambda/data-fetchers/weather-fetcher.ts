@@ -2,7 +2,11 @@
 // Fetches real weather data from OpenWeatherMap and writes to DynamoDB
 import { putWeather, WeatherData } from "../shared/dynamodb";
 
-const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || "";
+const OPENWEATHER_API_KEY =
+  process.env.OPENWEATHER_API_KEY ||
+  process.env.WEATHER ||
+  process.env.weather ||
+  "";
 const OPENWEATHER_URL = "https://api.openweathermap.org/data/2.5";
 
 // Major agricultural districts with lat/lon

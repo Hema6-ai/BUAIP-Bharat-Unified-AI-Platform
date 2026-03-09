@@ -5,8 +5,8 @@
 import { NextRequest } from 'next/server';
 import { streamSuperRouter } from '@/router/super_router';
 import { routeCapability } from '@/router/capability_router';
-import { getFactsContextForQuery } from '@/app/lib/factsVectorStore';
 import { resolveDeterministicFactQuery } from '@/app/lib/realTimeDataService';
+import { getLiveWebContextForQuery } from '@/app/lib/liveWebLookupService';
 import {
   runCanonicalInputPipeline,
   runCanonicalOutputPipeline,
@@ -40,6 +40,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const normalizedSelectedLanguage = normalizeUserLanguage(selectedLanguage);
+    const quickLocalAnswer = tryAnswerLocally(userMessage.trim(), normalizedSelectedLanguage);
+    if (quickLocalAnswer.handled && quickLocalAnswer.response) {
+      const localizedQuickAnswer = await localizeForSSE(
+        quickLocalAnswer.response,
+        normalizedSelectedLanguage,
+      );
+      return sseFromText(localizedQuickAnswer, {
+        engine: quickLocalAnswer.engine || 'Local Quick Response',
+        intent: 'local_quick',
+      });
+    }
+
+    const rawInputHash = hashQuery(userMessage, normalizedSelectedLanguage);
+    const rawCached = getCachedResult(rawInputHash);
+    if (rawCached?.response) {
+      return sseFromText(rawCached.response, { cacheHit: true, cacheLayer: 'raw' });
+    }
+
     const canonicalInput = await runCanonicalInputPipeline({
       text: userMessage,
       selectedLanguage,
@@ -50,7 +69,8 @@ export async function POST(request: NextRequest) {
     // ── LOCAL ANSWERING ──
     const localAnswer = tryAnswerLocally(normalizedUserMessage, responseLanguage);
     if (localAnswer.handled && localAnswer.response) {
-      return sseFromText(localAnswer.response, {
+      const localizedLocalResponse = await localizeForSSE(localAnswer.response, responseLanguage);
+      return sseFromText(localizedLocalResponse, {
         engine: localAnswer.engine || 'Local Quick Response',
         intent: 'local_quick',
       });
@@ -66,22 +86,33 @@ export async function POST(request: NextRequest) {
     // ── LAYER 1: CAPABILITY ROUTER ──
     const capabilityResult = await routeCapability(normalizedUserMessage, sessionId);
     if (capabilityResult.handled && capabilityResult.response) {
-      return sseFromText(capabilityResult.response, {
+      const localizedCapabilityResponse = await localizeForSSE(capabilityResult.response, responseLanguage);
+      return sseFromText(localizedCapabilityResponse, {
         engine: `BUAIP ${capabilityResult.capability || 'Capability'}`,
         intent: capabilityResult.capability || 'capability',
         ...capabilityResult.meta,
       });
     }
 
-    // ── Parallel pre-work (deterministic facts) ──
-    const [factualResult] = await Promise.all([
+    // ── Deterministic fact quick check ──
+    // Keep this path fast: avoid waiting on extra vector retrieval here.
+    const [factualResult, webContext] = await Promise.all([
       resolveDeterministicFactQuery(normalizedUserMessage),
-      getFactsContextForQuery(normalizedUserMessage),
+      getLiveWebContextForQuery(normalizedUserMessage),
     ]);
 
-    if (factualResult.handled && factualResult.response) {
-      return sseFromText(factualResult.response, { engine: 'Real-Time Fact Engine' });
+    const hasWebContext = Boolean(webContext.summary);
+    const shouldBypassUnavailableRealtime =
+      factualResult.factType === 'unavailable_realtime' && hasWebContext;
+
+    if (factualResult.handled && factualResult.response && !shouldBypassUnavailableRealtime) {
+      const localizedFactResponse = await localizeForSSE(factualResult.response, responseLanguage);
+      return sseFromText(localizedFactResponse, { engine: 'Real-Time Fact Engine' });
     }
+
+    const liveWebPromptContext = webContext.summary
+      ? `\n\nLIVE WEB CONTEXT (Web Lookup):\n${webContext.summary}`
+      : '';
 
     // ── STREAMING via Super Router ──
     const origin = request.nextUrl.origin;
@@ -92,7 +123,7 @@ export async function POST(request: NextRequest) {
         role: m.role,
         content: m.content,
       })),
-      profileSummary,
+      profileSummary: `${profileSummary || ''}${liveWebPromptContext}`,
       selectedLanguage,
       responseLanguage,
       hasLanguageOverride: canonicalInput.hasLanguageOverride,
@@ -124,6 +155,7 @@ export async function POST(request: NextRequest) {
 
           // Cache the result
           setCachedResult(qHash, { response: finalText });
+          setCachedResult(rawInputHash, { response: finalText });
 
           // Send done event with metadata
           controller.enqueue(encoder.encode(
@@ -158,6 +190,22 @@ export async function POST(request: NextRequest) {
       JSON.stringify({ error: err?.message || 'Internal error' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
+  }
+}
+
+async function localizeForSSE(text: string, responseLanguage: string): Promise<string> {
+  if (!text || responseLanguage === 'en') {
+    return text;
+  }
+
+  try {
+    const translated = await runCanonicalOutputPipeline({
+      englishText: text,
+      targetLanguage: normalizeUserLanguage(responseLanguage),
+    });
+    return translated.localizedText;
+  } catch {
+    return text;
   }
 }
 

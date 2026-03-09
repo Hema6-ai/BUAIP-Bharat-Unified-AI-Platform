@@ -26,6 +26,7 @@ export async function runLegalEngine(context: EngineRunContext): Promise<EngineO
     userMessage: context.userMessage,
     conversationHistory: context.conversationHistory,
     supportingContext,
+    languageContext: context.languageContext,
   });
 
   return {

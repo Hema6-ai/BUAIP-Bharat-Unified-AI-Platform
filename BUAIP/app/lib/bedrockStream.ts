@@ -25,7 +25,7 @@ interface Message {
 export async function* streamBedrock(
   messages: Message[],
   systemPrompt?: string,
-  maxTokens = 3000,
+  maxTokens = 4096,
   temperature = 0.4
 ): AsyncGenerator<string> {
   const body: any = {
