@@ -182,62 +182,91 @@ export function chunkDocument(fullText: string, pageCount: number): DocumentChun
 export async function generateDocumentExplanation(
   doc: ProcessedDocument,
 ): Promise<DocumentExplanation> {
-  const contextBlocks = doc.chunks.slice(0, 18).map((chunk) => ({
+  // Process ALL chunks, not just first 18
+  // For very large documents, group them intelligently
+  const contextBlocks = doc.chunks.map((chunk) => ({
     chunkId: chunk.chunkId,
     sectionName: chunk.sectionName,
     sectionTitle: chunk.sectionTitle,
     pageNumber: chunk.pageNumber,
-    text: chunk.text.slice(0, 2200),
+    text: chunk.text, // Don't truncate - let Claude see full content
   }));
 
-  const systemPrompt = `You are a document explainer. Use only the provided chunks.
+  // Comprehensive system prompt focused on generating detailed explanation
+  const systemPrompt = `You are an expert document analyst. Your task is to read the provided document and provide a comprehensive, easy-to-understand explanation suitable for someone who may not understand legal or technical English.
+
+Focus areas:
+1. What this document is about (plain language)
+2. Who needs to read this document
+3. Key sections and what they mean
+4. Important eligibility criteria (if applicable)
+5. Benefits or entitlements (if applicable)
+6. Application process or required actions
+7. Important deadlines or dates
+8. Required documents or proofs
+9. Common questions answered
+10. Key takeaways
 
 Rules:
-- Ground every claim in provided chunks.
-- If information is missing, state "Not specified in document".
-- Return valid JSON only.
+- Use simple, conversational language
+- Do NOT use legal jargon
+- Provide specific details from the document
+- Explain dates, amounts, and requirements clearly
+- If something is complex, break it into steps
+- Be thorough and detailed
+- Aim for 2000+ words of explanation
 
-JSON schema:
-{
-  "summary": "string",
-  "sections": [{"sectionName":"string","explanation":"string","evidenceChunkIds":["chunk-1"]}],
-  "eligibilityRules": ["string"],
-  "benefits": ["string"],
-  "importantDeadlines": ["string"],
-  "applicationSteps": ["string"],
-  "requiredDocuments": ["string"],
-  "unknowns": ["string"]
-}`;
+Format:
+1. Plain Language Summary
+2. Section-by-Section Explanation
+3. Who Should Apply
+4. Step-by-Step Process
+5. Required Documents
+6. Important Deadlines
+7. Benefits and Entitlements
+8. Common Questions Answered
+9. Key Takeaways
+10. Important Notes`;
 
-  const userPrompt = `Document metadata:
-- Name: ${doc.fileName}
-- Pages: ${doc.pageCount}
-- Chunks: ${doc.chunks.length}
+  const userPrompt = `Please analyze this document thoroughly and provide a comprehensive explanation:
 
-Chunks:
-${JSON.stringify(contextBlocks, null, 2)}`;
+Document: ${doc.fileName}
+Total Pages: ${doc.pageCount}
+Total Sections: ${doc.chunks.length}
+
+Full Document Content with Sections:
+${contextBlocks
+  .map(
+    (block, idx) =>
+      `[${"=".repeat(60)}]
+Section ${idx + 1}: ${block.sectionTitle} (Page ${block.pageNumber})
+Category: ${block.sectionName}
+[${"=".repeat(60)}]
+${block.text}
+`,
+  )
+  .join('\n')}
+
+Now provide a comprehensive explanation of this entire document for someone with no legal/technical background.`;
 
   const raw = await callBedrock(
     [{ role: 'user', content: userPrompt }],
     systemPrompt,
-    { maxTokens: 3200, temperature: 0.1 },
+    { maxTokens: 5000, temperature: 0.2 }, // Increased from 3200 to 5000
   );
 
-  const structured = parseJsonFromModel<StructuredExplanationModel>(raw) || fallbackStructuredExplanation(doc);
-  const fullExplanation = formatDocumentExplanation(structured);
+  // Return the raw explanation directly - it's already comprehensive
+  // No JSON parsing, just clean text
+  const fullExplanation = raw.trim() || fallbackTextualExplanation(doc);
 
   return {
-    summary: structured.summary,
-    sections: structured.sections.map((section) => ({
-      title: section.sectionName,
-      explanation: section.explanation,
-      evidenceChunkIds: section.evidenceChunkIds || [],
-    })),
-    eligibility: toBulletText(structured.eligibilityRules),
-    benefits: toBulletText(structured.benefits),
-    deadlines: toBulletText(structured.importantDeadlines),
-    applicationProcess: toBulletText(structured.applicationSteps),
-    requiredDocuments: toBulletText(structured.requiredDocuments),
+    summary: extractSummaryFromText(fullExplanation, doc),
+    sections: generateSectionsFromContent(doc),
+    eligibility: extractEligibilityFromContent(doc),
+    benefits: extractBenefitsFromContent(doc),
+    deadlines: extractDeadlinesFromContent(doc),
+    applicationProcess: extractApplicationProcessFromContent(doc),
+    requiredDocuments: extractRequiredDocumentsFromContent(doc),
     fullExplanation,
   };
 }
@@ -246,66 +275,83 @@ export async function answerDocumentQuestion(
   doc: ProcessedDocument,
   question: string,
 ): Promise<string> {
-  const relevantChunks = retrieveRelevantChunks(question, doc.chunks, 5);
+  // Get all relevant chunks, not just 5
+  const relevantChunks = retrieveRelevantChunks(question, doc.chunks, 10);
+  
+  if (relevantChunks.length === 0) {
+    // Still try with top chunks if no match found
+    relevantChunks.push(...doc.chunks.slice(0, 8));
+  }
+
   const chunkRecords = relevantChunks.map((chunk) => ({
     chunkId: chunk.chunkId,
     sectionName: chunk.sectionName,
     sectionTitle: chunk.sectionTitle,
     pageNumber: chunk.pageNumber,
-    text: chunk.text.slice(0, 2200),
+    text: chunk.text, // Don't truncate - provide full content
   }));
 
-  if (chunkRecords.length === 0) {
-    return 'I could not find relevant extracted sections for that question in the uploaded document.';
-  }
+  const systemPrompt = `You are a document analyst. Answer the user's question ONLY based on the providing document chunks.
 
-  const systemPrompt = `You answer questions using only the provided document chunks.
+RULES:
+1. Base your answer ONLY on the provided document sections.
+2. Be specific and detailed.
+3. If exact information is not in the document, say "This specific detail is not mentioned in the document."
+4. Include relevant section names and page numbers as context.
+5. Write in clear, simple language.
+6. Provide a thorough answer (300+ words if possible).`;
 
-Rules:
-- Never use outside knowledge.
-- If the answer is not found, set cannotAnswer=true.
-- Return valid JSON only.
+  const userPrompt = `Document: ${doc.fileName} (${doc.pageCount} pages)
 
-JSON schema:
-{
-  "answer": "string",
-  "usedChunkIds": ["chunk-1"],
-  "cannotAnswer": false,
-  "missingInformation": "string"
-}`;
+Question: ${question}
 
-  const userPrompt = `Question: ${question}
+Relevant document sections:
+${chunkRecords
+  .map(
+    (chunk) =>
+      `[${chunk.sectionTitle} - Page ${chunk.pageNumber}]
+${chunk.text}`,
+  )
+  .join('\n\n---\n\n')}
 
-Relevant chunks:
-${JSON.stringify(chunkRecords, null, 2)}`;
+Please answer the question thoroughly using ONLY the information from these document sections.`;
 
   const raw = await callBedrock(
     [{ role: 'user', content: userPrompt }],
     systemPrompt,
-    { maxTokens: 1600, temperature: 0.05 },
+    { maxTokens: 2000, temperature: 0.1 }, // Direct text answer, no JSON parsing
   );
 
-  const structured = parseJsonFromModel<StructuredAnswerModel>(raw);
-  if (!structured) {
-    return `I could not parse a structured answer. Here are the most relevant extracted sections:\n\n${chunkRecords
-      .slice(0, 2)
-      .map((chunk) => `[${chunk.sectionTitle} | page ${chunk.pageNumber}]\n${chunk.text.slice(0, 500)}`)
-      .join('\n\n')}`;
+  if (!raw || raw.trim().length === 0) {
+    // Even if LLM returns empty, provide fallback
+    return provideFallbackQuestionAnswer(chunkRecords, question);
   }
 
-  if (structured.cannotAnswer) {
-    const reason = structured.missingInformation || 'The requested detail is not explicitly stated in the uploaded document.';
-    return `The uploaded document does not clearly provide that answer. ${reason}`;
-  }
-
-  const evidence = (structured.usedChunkIds || [])
-    .map((id) => doc.chunks.find((chunk) => chunk.chunkId === id))
-    .filter((chunk): chunk is DocumentChunk => Boolean(chunk))
-    .map((chunk) => `- ${chunk.chunkId} (${chunk.sectionTitle}, page ${chunk.pageNumber})`)
+  // Return the answer directly - no JSON parsing
+  const answer = raw.trim();
+  
+  // Add evidence references
+  const evidenceText = chunkRecords
+    .slice(0, 3)
+    .map((chunk) => `- ${chunk.sectionTitle} (page ${chunk.pageNumber})`)
     .join('\n');
 
-  const evidenceBlock = evidence ? `\n\nEvidence:\n${evidence}` : '';
-  return `${structured.answer}${evidenceBlock}`;
+  return `${answer}\n\n---\nRelevant sections in your document:\n${evidenceText}`;
+}
+
+function provideFallbackQuestionAnswer(chunkRecords: Array<{ sectionName: string; sectionTitle: string; pageNumber: number; text: string }>, question: string): string {
+  const lines: string[] = [];
+  lines.push(`Based on your document, regarding "${question}":`);
+  lines.push('');
+
+  for (const chunk of chunkRecords.slice(0, 3)) {
+    lines.push(`## From: ${chunk.sectionTitle} (Page ${chunk.pageNumber})`);
+    lines.push(chunk.text.slice(0, 800));
+    lines.push('');
+  }
+
+  lines.push('For a more detailed answer, please ask a more specific question.');
+  return lines.join('\n');
 }
 
 async function parsePdf(buffer: Buffer): Promise<{ text: string; pageCount: number }> {
@@ -737,4 +783,118 @@ function toOrderedText(items?: string[]): string {
     return '1. Not specified in document';
   }
   return items.map((item, index) => `${index + 1}. ${item}`).join('\n');
+}
+
+// Extract summary from comprehensive explanation text
+function extractSummaryFromText(explanation: string, doc: ProcessedDocument): string {
+  // Try to extract from "Plain Language Summary" section
+  const summaryMatch = explanation.match(/1\.\s*Plain[^:]*?:\s*(.*?)(\n2\.|$)/is);
+  if (summaryMatch?.[1]) {
+    return summaryMatch[1].trim().slice(0, 500);
+  }
+  // Fallback: first 500 chars of explanation
+  return explanation.slice(0, 500) || `Document: ${doc.fileName} (${doc.pageCount} pages)`;
+}
+
+// Generate sections from document chunks
+function generateSectionsFromContent(doc: ProcessedDocument): Array<{ title: string; explanation: string; evidenceChunkIds: string[] }> {
+  return doc.chunks.slice(0, 10).map((chunk) => ({
+    title: chunk.sectionTitle,
+    explanation: chunk.text.slice(0, 400),
+    evidenceChunkIds: [chunk.chunkId],
+  }));
+}
+
+// Extract eligibility info from document
+function extractEligibilityFromContent(doc: ProcessedDocument): string {
+  const eligibilityChunks = doc.chunks.filter((chunk) => chunk.sectionName === 'Eligibility');
+  if (eligibilityChunks.length === 0) {
+    return '- Not specified in document';
+  }
+  return eligibilityChunks
+    .map((chunk) => `- ${chunk.text.slice(0, 300)}`)
+    .join('\n')
+    .slice(0, 800);
+}
+
+// Extract benefits info from document
+function extractBenefitsFromContent(doc: ProcessedDocument): string {
+  const benefitChunks = doc.chunks.filter((chunk) => chunk.sectionName === 'Benefits');
+  if (benefitChunks.length === 0) {
+    return '- Not specified in document';
+  }
+  return benefitChunks
+    .map((chunk) => `- ${chunk.text.slice(0, 300)}`)
+    .join('\n')
+    .slice(0, 800);
+}
+
+// Extract deadline info from document
+function extractDeadlinesFromContent(doc: ProcessedDocument): string {
+  const deadlineChunks = doc.chunks.filter((chunk) => chunk.sectionName === 'Important Dates');
+  if (deadlineChunks.length === 0) {
+    return '- Not specified in document';
+  }
+  return deadlineChunks
+    .map((chunk) => `- ${chunk.text.slice(0, 300)}`)
+    .join('\n')
+    .slice(0, 800);
+}
+
+// Extract application process from document
+function extractApplicationProcessFromContent(doc: ProcessedDocument): string {
+  const processChunks = doc.chunks.filter((chunk) => chunk.sectionName === 'Application Process');
+  if (processChunks.length === 0) {
+    return '1. Not specified in document';
+  }
+  return processChunks
+    .map((chunk, idx) => `${idx + 1}. ${chunk.text.slice(0, 300)}`)
+    .join('\n')
+    .slice(0, 1000);
+}
+
+// Extract required documents from document
+function extractRequiredDocumentsFromContent(doc: ProcessedDocument): string {
+  const docChunks = doc.chunks.filter((chunk) => chunk.sectionName === 'Required Documents');
+  if (docChunks.length === 0) {
+    return '- [ ] Not specified in document';
+  }
+  return docChunks
+    .map((chunk) => `- [ ] ${chunk.text.slice(0, 300)}`)
+    .join('\n')
+    .slice(0, 1000);
+}
+
+// Fallback textual explanation when LLM analysis works
+function fallbackTextualExplanation(doc: ProcessedDocument): string {
+  const lines: string[] = [];
+  lines.push(`# Explanation of ${doc.fileName}`);
+  lines.push(`(Document: ${doc.pageCount} pages, ${doc.fullText.length} characters)`);
+  lines.push('');
+
+  lines.push('## Summary');
+  lines.push(doc.fullText.slice(0, 500));
+  lines.push('');
+
+  lines.push('## Sections Found');
+  for (let i = 0; i < Math.min(doc.chunks.length, 15); i++) {
+    const chunk = doc.chunks[i];
+    lines.push(`### ${chunk.sectionTitle} (Page ${chunk.pageNumber})`);
+    lines.push(chunk.text.slice(0, 600));
+    lines.push('');
+  }
+
+  lines.push('## Key Information');
+  lines.push(
+    '- Total pages: ' + doc.pageCount,
+  );
+  lines.push('- Total sections: ' + doc.chunks.length);
+  lines.push('- Document type: ' + doc.fileType);
+  lines.push('');
+
+  lines.push(
+    'For more detailed analysis, please ask a specific question about this document.',
+  );
+
+  return lines.join('\n');
 }

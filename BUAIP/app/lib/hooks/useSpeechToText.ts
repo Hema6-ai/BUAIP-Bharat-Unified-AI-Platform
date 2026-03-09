@@ -124,9 +124,13 @@ export function useSpeechToText(): UseSTTReturn {
       if (err === 'no-speech' || err === 'aborted') return;
       activeRef.current = false;
       setIsListening(false);
-      if (err === 'not-allowed') setError('Microphone permission denied. Please allow access.');
-      else if (err === 'audio-capture') setError('No microphone found. Check your device.');
-      else setError('Speech error: ' + err);
+      if (err === 'not-allowed') {
+        setError('🎤 Microphone access denied. Click 🔒 in your browser address bar → Site settings → Allow Microphone');
+      } else if (err === 'audio-capture') {
+        setError('🎤 No microphone detected. Check: 1) Is microphone plugged in? 2) Browser permissions? 3) Try refreshing page');
+      } else {
+        setError('Speech error: ' + err + ' - Try refreshing the page');
+      }
     };
 
     rec.onend = () => {

@@ -368,35 +368,70 @@ async function handleImageAnalysis(
     'Generating explanation',
   ];
 
-  const analysis = await analyzeImage(buffer, question || undefined);
+  try {
+    console.log('[AI-Capabilities] Starting image analysis for:', fileName);
+    const analysis = await analyzeImage(buffer, question || undefined);
+    console.log('[AI-Capabilities] Image analysis successful');
 
-  const imageId = `img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  if (sessionId) storeImageAnalysis(sessionId, imageId, analysis);
+    const imageId = `img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    if (sessionId) storeImageAnalysis(sessionId, imageId, analysis);
 
-  return NextResponse.json({
-    capability: 'photo-answer',
-    response: analysis.explanation,
-    imageName: fileName,
-    imageId,
-    labels: analysis.labels.slice(0, 10).map((l) => ({
-      name: l.name,
-      confidence: Math.round(l.confidence),
-    })),
-    textFound: analysis.textDetections
-      .filter((t) => t.type === 'LINE')
-      .map((t) => t.text)
-      .slice(0, 20),
-    detectedIntent: analysis.detectedIntent,
-    intentCategory: analysis.intentCategory,
-    sceneContext: analysis.sceneContext,
-    progressStages,
-    pipeline: [
-      'Input',
-      'Context Extraction',
-      'Structured Knowledge Creation',
-      'AI Reasoning',
-      'Human-friendly explanation',
-    ],
-    engine: 'BUAIP Photo Analyzer',
-  });
+    return NextResponse.json({
+      capability: 'photo-answer',
+      response: analysis.explanation,
+      imageName: fileName,
+      imageId,
+      labels: analysis.labels.slice(0, 10).map((l) => ({
+        name: l.name,
+        confidence: Math.round(l.confidence),
+      })),
+      textFound: analysis.textDetections
+        .filter((t) => t.type === 'LINE')
+        .map((t) => t.text)
+        .slice(0, 20),
+      detectedIntent: analysis.detectedIntent,
+      intentCategory: analysis.intentCategory,
+      sceneContext: analysis.sceneContext,
+      progressStages,
+      pipeline: [
+        'Input',
+        'Context Extraction',
+        'Structured Knowledge Creation',
+        'AI Reasoning',
+        'Human-friendly explanation',
+      ],
+      engine: 'BUAIP Photo Analyzer',
+    });
+  } catch (error: any) {
+    console.error('[AI-Capabilities] Image analysis failed:', error);
+    
+    let errorMessage = 'Photo analysis failed';
+    
+    if (error.message.includes('Rekognition')) {
+      errorMessage = `AWS Rekognition error: ${error.message}. Check: 1) AWS credentials valid? 2) Rekognition enabled in ${process.env.AWS_REGION || 'ap-south-1'}? 3) IAM permissions include rekognition:DetectLabels and rekognition:DetectText?`;
+    } else if (error.message.includes('Bedrock')) {
+      errorMessage = `AWS Bedrock error: ${error.message}. Check: 1) Bedrock enabled? 2) Model ID valid: ${process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20241022-v2:0'}?`;
+    } else if (error.message.includes('ENOSPC')) {
+      errorMessage = 'Disk space error. Check available storage.';
+    } else if (error.message.includes('EACCES')) {
+      errorMessage = 'Permission error. Check file system permissions.';
+    } else {
+      errorMessage = `Photo analysis error: ${error.message}`;
+    }
+    
+    return NextResponse.json({
+      capability: 'photo-answer',
+      error: errorMessage,
+      imageName: fileName,
+      progressStages,
+      pipeline: [
+        'Input',
+        'Context Extraction',
+        'Structured Knowledge Creation',
+        'AI Reasoning',
+        'Human-friendly explanation',
+      ],
+      engine: 'BUAIP Photo Analyzer',
+    }, { status: 500 });
+  }
 }

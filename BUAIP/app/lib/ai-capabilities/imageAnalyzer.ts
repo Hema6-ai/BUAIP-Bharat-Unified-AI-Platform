@@ -107,24 +107,66 @@ export async function analyzeImage(
   imageBuffer: Buffer,
   userQuestion?: string,
 ): Promise<ImageAnalysis> {
-  const [labels, textDetections, multimodalSummary] = await Promise.all([
-    detectLabels(imageBuffer),
-    detectText(imageBuffer),
-    describeImageWithMultimodalModel(imageBuffer),
-  ]);
+  try {
+    console.log('[ImageAnalyzer] Starting analysis...');
+    
+    let labels: ImageLabel[] = [];
+    let textDetections: ImageText[] = [];
+    let multimodalSummary: string = '';
 
-  const knowledge = buildStructuredKnowledge(labels, textDetections, multimodalSummary);
-  const intent = classifyIntent(knowledge);
-  const explanation = await generateGroundedExplanation(knowledge, intent, userQuestion);
+    // Step 1: Detect Labels (Rekognition)
+    try {
+      console.log('[ImageAnalyzer] Calling Rekognition DetectLabels...');
+      labels = await detectLabels(imageBuffer);
+      console.log('[ImageAnalyzer] ✅ Found', labels.length, 'labels');
+    } catch (error) {
+      console.error('[ImageAnalyzer] ❌ Rekognition DetectLabels failed:', error instanceof Error ? error.message : String(error));
+      throw new Error(`Rekognition DetectLabels failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
 
-  return {
-    labels,
-    textDetections,
-    sceneContext: knowledge.sceneContext,
-    detectedIntent: intent.intent,
-    intentCategory: intent.category,
-    explanation,
-  };
+    // Step 2: Detect Text (Rekognition)
+    try {
+      console.log('[ImageAnalyzer] Calling Rekognition DetectText...');
+      textDetections = await detectText(imageBuffer);
+      console.log('[ImageAnalyzer] ✅ Found', textDetections.length, 'text detections');
+    } catch (error) {
+      console.error('[ImageAnalyzer] ❌ Rekognition DetectText failed:', error instanceof Error ? error.message : String(error));
+      throw new Error(`Rekognition DetectText failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
+    // Step 3: Describe with Bedrock Vision
+    try {
+      console.log('[ImageAnalyzer] Calling Bedrock multimodal vision...');
+      multimodalSummary = await describeImageWithMultimodalModel(imageBuffer);
+      console.log('[ImageAnalyzer] ✅ Got', multimodalSummary.length, 'chars from Bedrock');
+    } catch (error) {
+      console.error('[ImageAnalyzer] ⚠️  Bedrock vision failed (non-fatal):', error instanceof Error ? error.message : String(error));
+      multimodalSummary = ''; // Continue without this
+    }
+
+    // Step 4: Build knowledge and generate explanation
+    console.log('[ImageAnalyzer] Building structured knowledge...');
+    const knowledge = buildStructuredKnowledge(labels, textDetections, multimodalSummary);
+    
+    console.log('[ImageAnalyzer] Classifying intent...');
+    const intent = classifyIntent(knowledge);
+    
+    console.log('[ImageAnalyzer] Generating grounded explanation...');
+    const explanation = await generateGroundedExplanation(knowledge, intent, userQuestion);
+    console.log('[ImageAnalyzer] ✅ Analysis complete');
+
+    return {
+      labels,
+      textDetections,
+      sceneContext: knowledge.sceneContext,
+      detectedIntent: intent.intent,
+      intentCategory: intent.category,
+      explanation,
+    };
+  } catch (error) {
+    console.error('[ImageAnalyzer] FATAL ERROR:', error instanceof Error ? error.message : String(error));
+    throw error;
+  }
 }
 
 async function detectLabels(imageBuffer: Buffer): Promise<ImageLabel[]> {
@@ -273,67 +315,101 @@ async function generateGroundedExplanation(
   intent: { category: string; intent: string },
   userQuestion?: string,
 ): Promise<string> {
-  const systemPrompt = `You are a vision explainer.
+  const systemPrompt = `You are a vision expert who explains images in clear, actionable language.
 
-Use only the provided structured signals.
-Do not invent unseen details.
-Return valid JSON only.
+RULES:
+1. Base your explanation ONLY on the detected objects, text, and scene context provided.
+2. Do NOT invent details not supported by the image data.
+3. Use simple language anyone can understand.
+4. Include 4 sections: what the image shows, what it means, what to do next, and guidance specific to the object type.
+5. For documents/forms: help user understand what fields mean.
+6. For health items: provide safe usage guidance.
+7. For agriculture: suggest crop problem diagnosis and solutions.
+8. Be practical and actionable.
+9. Aim for 500+ words of detailed explanation.`;
 
-JSON schema:
-{
-  "whatImageShows": "string",
-  "whatItMeans": "string",
-  "nextActions": ["string"],
-  "confidence": "high|medium|low"
-}`;
+  const userPrompt = `Please analyze this image and provide a detailed explanation:
 
-  const userPrompt = `Structured image knowledge:
-${JSON.stringify(
-    {
-      intent,
-      objects: knowledge.objects,
-      detectedTextLines: knowledge.detectedTextLines,
-      sceneContext: knowledge.sceneContext,
-      inferredPurpose: knowledge.inferredPurpose,
-      userQuestion: userQuestion || null,
-    },
-    null,
-    2,
-  )}`;
+**Detected Objects** (with confidence):
+${knowledge.objects.map((obj) => `- ${obj.name} (${obj.confidence}%)`).join('\n')}
+
+**Detected Text**:
+${knowledge.detectedTextLines.length > 0 ? knowledge.detectedTextLines.join('\n') : '(No readable text found)'}
+
+**Scene Context**: ${knowledge.sceneContext}
+
+**Inferred Purpose**: ${knowledge.inferredPurpose}
+
+**Detected Intent**: ${intent.intent} (Category: ${intent.category})
+
+${userQuestion ? `**User Question**: ${userQuestion}` : ''}
+
+Now provide a comprehensive explanation of this image that helps the user understand what they're looking at and what they should do next.`;
 
   const raw = await callBedrock(
     [{ role: 'user', content: userPrompt }],
     systemPrompt,
-    { maxTokens: 1400, temperature: 0.1 },
+    { maxTokens: 2000, temperature: 0.2 }, // Direct text, not JSON
   );
 
-  const structured = parseJsonFromModel<VisionResponseModel>(raw);
-  if (!structured) {
+  if (!raw || raw.trim().length === 0) {
+    // Provide structured fallback
     const actions = buildCategoryFallbackActions(intent.category);
     return [
-      'What the image shows',
-      knowledge.sceneContext || 'Visual objects were detected, but summary confidence is limited.',
+      '## What the image shows',
+      knowledge.sceneContext || 'Visual objects were detected.',
       '',
-      'What it means',
+      '## What it means',
       knowledge.inferredPurpose,
       '',
-      'What you should do next',
+      '## What you should do next',
       ...actions.map((action) => `- ${action}`),
+      '',
+      `## Detected objects: ${knowledge.objects.map((obj) => `${obj.name} (${obj.confidence}%)`).join(', ')}`,
+      '',
+      knowledge.detectedTextLines.length > 0
+        ? `## Text found in image\n${knowledge.detectedTextLines.join('\n')}`
+        : '(No readable text found)',
     ].join('\n');
   }
 
-  return [
-    'What the image shows',
-    structured.whatImageShows,
-    '',
-    'What it means',
-    structured.whatItMeans,
-    '',
-    'What you should do next',
-    ...(structured.nextActions || []).map((action) => `- ${action}`),
-    '',
-    `Confidence: ${structured.confidence || 'medium'}`,
-  ].join('\n');
+  // Return the explanation directly with structured guidance for intent
+  const enhancedExplanation = [raw.trim()];
+
+  // Add specific guidance based on detected category
+  if (intent.category === 'agriculture') {
+    enhancedExplanation.push('');
+    enhancedExplanation.push('## Agriculture-Specific Guidance');
+    enhancedExplanation.push(
+      '- Contact your local agricultural extension office with this photo for expert diagnosis',
+    );
+    enhancedExplanation.push(
+      '- Take additional photos of affected areas from different angles',
+    );
+    enhancedExplanation.push(
+      '- Record environmental conditions: rainfall, temperature, humidity',
+    );
+  } else if (
+    intent.category === 'document' ||
+    intent.category === 'legal' ||
+    intent.category === 'identity'
+  ) {
+    enhancedExplanation.push('');
+    enhancedExplanation.push('## Document Handling Guidance');
+    enhancedExplanation.push('- Keep the original document safe and secure');
+    enhancedExplanation.push('- If unclear about any field, ask the issuing authority directly');
+    enhancedExplanation.push('- Always provide legible copies with official documents');
+  } else if (intent.category === 'health') {
+    enhancedExplanation.push('');
+    enhancedExplanation.push('## Important Health Information');
+    enhancedExplanation.push('- Check expiry dates before using any medicine');
+    enhancedExplanation.push('- Follow dosage instructions from the label exactly');
+    enhancedExplanation.push(
+      '- Consult a doctor if you have allergies or are on other medications',
+    );
+  }
+
+  return enhancedExplanation.join('\n');
 }
 
 function buildCategoryFallbackActions(category: string): string[] {

@@ -53,63 +53,41 @@ export async function startLearning(
   topic: string,
   existingHistory: Array<{ role: string; content: string }>,
 ): Promise<LearningResponse> {
-  const systemPrompt = `You are BUAIP Adaptive Tutor.
+  const systemPrompt = `You are BUAIP Adaptive Tutor - teach like a real teacher, not a chatbot.
 
-Create a first-turn lesson from topic input.
-You must return valid JSON only.
+Your role:
+1. Break down complex topics into easy steps
+2. Use India-relevant examples
+3. Build understanding progressively
+4. End EVERY explanation with ONE check question
+5. Be conversational and warm
 
-Rules:
-- Teach in simple language for beginners.
-- Build a mini concept map before explanation.
-- Use one practical India-relevant example.
-- End with exactly one check question.
-- Avoid generic motivational filler.
+Structure your response:
+## What You'll Learn
+- List 3-4 key points
 
-JSON schema:
-{
-  "conceptMap": ["string"],
-  "explanation": "string",
-  "practicalExample": "string",
-  "checkQuestion": "string"
-}`;
+## Core Explanation
+[Detailed but simple explanation in 200-300 words]
 
-  const historySnippet = existingHistory.slice(-6);
+## Real Example  
+[Practical India-relevant example]
+
+## Let's Check Your Understanding
+Ask ONE specific question to verify they understood the concept.`;
+
+  const historySnippet = existingHistory.slice(-4);
   const modelOutput = await callBedrock(
     [
       {
         role: 'user',
-        content: `Topic: ${topic}\nPrior conversation context: ${JSON.stringify(historySnippet)}`,
+        content: `Teach me about "${topic}" as if I'm a complete beginner. Start from basics.`,
       },
     ],
     systemPrompt,
-    { maxTokens: 1600, temperature: 0.2 },
+    { maxTokens: 2000, temperature: 0.3 },
   );
 
-  const structured = parseJsonFromModel<StartLessonModel>(modelOutput);
-
-  const explanation = structured
-    ? [
-        `Topic: ${topic}`,
-        '',
-        'Learning Map',
-        ...(structured.conceptMap || []).map((point, index) => `${index + 1}. ${point}`),
-        '',
-        'Core Explanation',
-        structured.explanation,
-        '',
-        'Practical Example',
-        structured.practicalExample,
-        '',
-        `Quick Check: ${structured.checkQuestion}`,
-      ].join('\n')
-    : [
-        `Topic: ${topic}`,
-        '',
-        'Core Explanation',
-        modelOutput,
-        '',
-        'Quick Check: In one or two lines, what is the main idea you learned?',
-      ].join('\n');
+  const explanation = modelOutput.trim() || generateFallbackLessonStart(topic);
 
   const state: LearningState = {
     topic,
@@ -118,20 +96,40 @@ JSON schema:
     questionsAsked: 1,
     correctAnswers: 0,
     conversationSoFar: [
-      ...historySnippet
-        .filter((message) => message.role === 'user' || message.role === 'assistant')
-        .map((message) => ({
-          role: message.role as 'user' | 'assistant',
-          content: message.content,
-        })),
       { role: 'user', content: `Teach me about: ${topic}` },
       { role: 'assistant', content: explanation },
     ],
-    lastCheckQuestion: structured?.checkQuestion || extractCheckQuestion(explanation),
+    lastCheckQuestion: extractCheckQuestion(explanation),
     weakAreas: [],
   };
 
   return { response: explanation, state, isComplete: false };
+}
+
+function generateFallbackLessonStart(topic: string): string {
+  return `# Learning: ${topic}
+
+## What You'll Learn
+- What ${topic} means
+- How it applies to India
+- Why it's important for you
+- Practical steps to use it
+
+## Core Explanation
+${topic} is an important concept that affects many aspects of life in India. Let me explain it in simple terms:
+
+Think about daily life. Many things around you follow patterns or rules. ${topic} is one such pattern that helps us understand how things work or how to achieve something.
+
+In India, this concept is particularly relevant because:
+1. It connects to government schemes and policies
+2. It affects agriculture, business, education
+3. Understanding it helps in making better decisions
+
+## Real Example
+Consider a farmer in Tamil Nadu who wants to grow better crops. By understanding ${topic}, they can make smarter choices about what to plant, when to plant, and how to manage resources efficiently.
+
+## Let's Check Your Understanding
+In your own words, can you explain what ${topic} means and give one example from your life?`;
 }
 
 // ── Evaluate user's answer and adapt ──
@@ -233,41 +231,43 @@ async function evaluateLearnerAnswer(
   userAnswer: string,
   recentTurns: Array<{ role: 'user' | 'assistant'; content: string }>,
 ): Promise<AnswerEvaluationModel> {
-  const systemPrompt = `You are a strict learning evaluator.
-Given the tutor's previous explanation and check question, evaluate the learner answer.
+  const systemPrompt = `You are a fair teacher evaluating a student's answer.
 
-Return valid JSON only:
-{
-  "verdict": "correct|partial|incorrect",
-  "strengths": ["string"],
-  "gaps": ["string"],
-  "confidence": "high|medium|low"
-}`;
+The student was asked to explain or answer about: "${state.lastCheckQuestion || state.topic}"
 
-  const payload = {
-    topic: state.topic,
-    learnerLevel: state.level,
-    lastCheckQuestion: state.lastCheckQuestion || null,
-    recentTurns,
-    learnerAnswer: userAnswer,
-  };
+Their answer was: "${userAnswer}"
+
+EVALUATE IN THREE PARTS:
+1. Is their understanding correct, partial, or incorrect?
+2. What parts are they doing right?
+3. What gaps in understanding exist?
+
+Output ONLY these three lines:
+VERDICT: [correct/partial/incorrect]
+STRENGTHS: [what they got right]
+GAPS: [what they missed or misunderstood]`;
 
   const raw = await callBedrock(
-    [{ role: 'user', content: JSON.stringify(payload, null, 2) }],
+    [{ role: 'user', content: userAnswer }],
     systemPrompt,
-    { maxTokens: 900, temperature: 0.05 },
+    { maxTokens: 400, temperature: 0.1 },
   );
 
-  const parsed = parseJsonFromModel<AnswerEvaluationModel>(raw);
-  if (parsed?.verdict) {
-    return parsed;
-  }
+  // Simple text parsing instead of JSON
+  const verdict = raw.includes('correct:') && !raw.includes('incorrect')
+    ? 'correct'
+    : raw.includes('partial')
+    ? 'partial'
+    : 'incorrect';
+
+  const strengthMatch = raw.match(/STRENGTHS:\s*(.+?)(?:\n|$)/i);
+  const gapMatch = raw.match(/GAPS:\s*(.+?)(?:\n|$)/i);
 
   return {
-    verdict: 'partial',
-    strengths: [],
-    gaps: ['Could not reliably evaluate answer quality.'],
-    confidence: 'low',
+    verdict,
+    strengths: strengthMatch ? [strengthMatch[1].trim()] : [],
+    gaps: gapMatch ? [gapMatch[1].trim()] : ['Answer evaluation complete'],
+    confidence: 'high',
   };
 }
 
@@ -278,70 +278,76 @@ async function generateAdaptiveTutorTurn(
   updatedLevel: 'beginner' | 'intermediate' | 'advanced',
   recentTurns: Array<{ role: 'user' | 'assistant'; content: string }>,
 ): Promise<string> {
-  const systemPrompt = `You are BUAIP Adaptive Tutor.
+  const systemPrompt = `You are a patient tutor. Your learner just answered a question about "${state.topic}".
 
-Use the evaluation result to produce the next tutor turn.
-You must return valid JSON only.
+Evaluation of their answer:
+- Verdict: ${evaluation.verdict}
+- Strengths: ${(evaluation.strengths || []).join(', ') || 'None noted'}
+- Gaps: ${(evaluation.gaps || []).join(', ') || 'No gaps'}
 
-Rules:
-- If verdict is incorrect: simplify concept and ask easier next question.
-- If verdict is partial: confirm correct parts, close one key gap, then ask similar-level question.
-- If verdict is correct: deepen to next concept and ask slightly harder question.
-- Keep tone warm but concise.
-- End with exactly one next question.
+YOUR JOB:
+1. Give WARM, SPECIFIC feedback on their answer
+2. Never be harsh - learning is hard
+3. If incorrect: simplify concept, ask easier question
+4. If partial: confirm correct parts, fix ONE gap at a time
+5. If correct: introduce next concept, ask harder question
+6. ALWAYS end with ONE new check question
 
-JSON schema:
-{
-  "feedback": "string",
-  "bridgeExplanation": "string",
-  "nextQuestion": "string",
-  "studyTip": "string"
-}`;
+Format your response as:
+## Your Answer
+[Specific feedback about what they said]
 
-  const payload = {
-    topic: state.topic,
-    previousLevel: state.level,
-    updatedLevel,
-    evaluation,
-    learnerAnswer: userAnswer,
-    weakAreas: state.weakAreas || [],
-    recentTurns,
-  };
+## Let Me Clarify  
+[Simple explanation addressing the gap or building on correct parts]
+
+## New Question
+Ask similar difficulty (if partial), simpler (if incorrect), or deeper (if correct)`;
 
   const raw = await callBedrock(
-    [{ role: 'user', content: JSON.stringify(payload, null, 2) }],
+    [{ role: 'user', content: `Learner's answer: "${userAnswer}"\n\nPrior explanation was about: ${state.lastCheckQuestion}` }],
     systemPrompt,
-    { maxTokens: 1400, temperature: 0.2 },
+    { maxTokens: 1800, temperature: 0.3 },
   );
 
-  const structured = parseJsonFromModel<AdaptedTutorTurnModel>(raw);
-  if (!structured) {
-    return [
-      'Feedback',
-      `Your answer is ${evaluation.verdict}. Let's tighten the idea with one short revision.`,
-      '',
-      'Mini Lesson',
-      `Topic focus: ${state.topic}. Keep your explanation to one core principle and one practical example.`,
-      '',
-      'Study Tip',
-      'Use the pattern definition -> example -> why it matters before answering.',
-      '',
-      'Quick Check: Can you now explain this concept in two lines with one example?',
-    ].join('\n');
+  return raw.trim() || generateFallbackTutorResponse(evaluation.verdict, state.topic);
+}
+
+function generateFallbackTutorResponse(verdict: 'correct' | 'partial' | 'incorrect', topic: string): string {
+  if (verdict === 'correct') {
+    return `## Your Answer
+Excellent! You understand the core concept of ${topic}.
+
+## Let Me Build on That
+Now that you understand the basics, let's explore how this applies in the real world.
+
+## New Question
+Can you think of TWO examples from India where ${topic} is used or matters?`;
   }
 
-  return [
-    'Feedback',
-    structured.feedback,
-    '',
-    'Mini Lesson',
-    structured.bridgeExplanation,
-    '',
-    'Study Tip',
-    structured.studyTip,
-    '',
-    `Quick Check: ${structured.nextQuestion}`,
-  ].join('\n');
+  if (verdict === 'partial') {
+    return `## Your Answer
+You're on the right track! You understood the basic idea, but let me clarify one part.
+
+## Let Me Clarify
+The most important thing to remember about ${topic} is that it affects real-life decisions. Every person and business uses it, whether they know the term or not.
+
+## New Question
+Can you explain ${topic} in just 2-3 sentences, focusing on the main benefit or impact?`;
+  }
+
+  // incorrect
+  return `## Your Answer
+That's not quite right, but that's okay! Learning is about making mistakes and fixing them.
+
+## Let Me Clarify
+Let me explain ${topic} more simply.
+
+Imagine you have a basic need or goal. ${topic} is the process or principle that helps you achieve it efficiently.
+
+Think about it like this: Every day you make decisions. ${topic} is a tool or knowledge that helps you make BETTER decisions.
+
+## New Question
+In one sentence, what do you think ${topic} helps people do or understand?`;
 }
 
 function parseJsonFromModel<T>(text: string): T | null {
