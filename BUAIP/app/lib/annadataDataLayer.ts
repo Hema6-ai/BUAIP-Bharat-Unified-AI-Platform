@@ -307,9 +307,9 @@ interface S3Config {
 
 const S3_CONFIG: S3Config = {
   bucket: process.env.AWS_S3_BUCKET || "annadata-offline-cache",
-  region: process.env.AWS_REGION || "ap-south-1", // India region
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.BEDROCK_REGION || process.env.AWS_REGION || "ap-south-1", // India region
+  accessKeyId: process.env.BEDROCK_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.BEDROCK_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY,
 };
 
 async function uploadToS3(key: string, data: any): Promise<boolean> {

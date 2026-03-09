@@ -1,0 +1,46 @@
+version: 1
+env:
+  variables:
+    NODE_ENV: production
+    NEXT_PUBLIC_APP_NAME: BUAIP
+
+backend:
+  phases:
+    preBuild:
+      commands:
+        - echo "Installing dependencies..."
+        - npm ci
+    build:
+      commands:
+        - echo "Building Next.js app..."
+        - npm run build
+    postBuild:
+      commands:
+        - echo "Build complete"
+
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - echo "Frontend pre-build phase"
+    build:
+      commands:
+        - echo "Frontend already built in backend"
+  artifacts:
+    baseDirectory: .next
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*
+
+artifacts:
+  baseDirectory: .next
+  files:
+    - "**/*"
+
+cache:
+  paths:
+    - "node_modules/**/*"
+    - ".next/cache/**/*"
