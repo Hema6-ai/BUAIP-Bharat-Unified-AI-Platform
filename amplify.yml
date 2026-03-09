@@ -11,12 +11,10 @@ applications:
         preBuild:
           commands:
             - echo "Installing dependencies..."
-            - cd BUAIP
             - npm ci
         build:
           commands:
             - echo "Building Next.js app..."
-            - cd BUAIP
             - npm run build
         postBuild:
           commands:
@@ -30,18 +28,18 @@ applications:
           commands:
             - echo "Frontend already built in backend"
       artifacts:
-        baseDirectory: BUAIP/.next
+        baseDirectory: .next
         files:
           - "**/*"
       cache:
         paths:
-          - BUAIP/node_modules/**/*
-          - BUAIP/.next/cache/**/*
+          - node_modules/**/*
+          - .next/cache/**/*
     artifacts:
-      baseDirectory: BUAIP/.next
+      baseDirectory: .next
       files:
         - "**/*"
     cache:
       paths:
-        - "BUAIP/node_modules/**/*"
-        - "BUAIP/.next/cache/**/*"
+        - "node_modules/**/*"
+        - ".next/cache/**/*"
