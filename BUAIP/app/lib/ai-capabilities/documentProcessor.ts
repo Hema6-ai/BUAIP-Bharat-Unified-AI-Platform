@@ -788,7 +788,7 @@ function toOrderedText(items?: string[]): string {
 // Extract summary from comprehensive explanation text
 function extractSummaryFromText(explanation: string, doc: ProcessedDocument): string {
   // Try to extract from "Plain Language Summary" section
-  const summaryMatch = explanation.match(/1\.\s*Plain[^:]*?:\s*(.*?)(\n2\.|$)/is);
+  const summaryMatch = explanation.match(/1\.\s*Plain[^:]*?:\s*([\s\S]*?)(\n2\.|$)/i);
   if (summaryMatch?.[1]) {
     return summaryMatch[1].trim().slice(0, 500);
   }

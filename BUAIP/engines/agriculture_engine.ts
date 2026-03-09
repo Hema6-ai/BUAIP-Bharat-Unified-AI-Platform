@@ -8,13 +8,13 @@ import { getWeatherData, formatWeatherForLLM } from '@/app/lib/weatherService';
  */
 function extractLocation(context: EngineRunContext): string | null {
   // Check extracted entities first
-  if (context.extractedEntities?.location) {
+  if (context.extractedEntities?.location && typeof context.extractedEntities.location === 'string') {
     return context.extractedEntities.location;
   }
-  if (context.extractedEntities?.state) {
+  if (context.extractedEntities?.state && typeof context.extractedEntities.state === 'string') {
     return context.extractedEntities.state;
   }
-  if (context.extractedEntities?.district) {
+  if (context.extractedEntities?.district && typeof context.extractedEntities.district === 'string') {
     return context.extractedEntities.district;
   }
 
