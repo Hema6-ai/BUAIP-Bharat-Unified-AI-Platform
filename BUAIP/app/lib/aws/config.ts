@@ -11,7 +11,7 @@ export const awsConfig = {
 // AWS Core Credentials (Required for all services)
 export const AWS_CONFIG = {
   // Required - Support both AWS_ prefix and non-prefix names for Amplify compatibility
-  AWS_REGION: process.env.BEDROCK_REGION || process.env.AWS_REGION || 'ap-south-1',
+  AWS_REGION: process.env.BEDROCK_REGION || process.env.AWS_REGION || 'us-east-1',
   AWS_ACCESS_KEY_ID: process.env.BEDROCK_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID,
   AWS_SECRET_ACCESS_KEY: process.env.BEDROCK_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY,
 

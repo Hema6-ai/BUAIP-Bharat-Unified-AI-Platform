@@ -47,7 +47,7 @@ const POLLY_LANGUAGE_CODES: Record<SupportedLanguage, string> = {
 
 // Initialize AWS Polly client
 const pollyClient = new Polly({
-  region: process.env.BEDROCK_REGION || process.env.AWS_REGION || "ap-south-1",
+  region: process.env.BEDROCK_REGION || process.env.AWS_REGION || "us-east-1",
   credentials: {
     accessKeyId: process.env.BEDROCK_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID || "",
     secretAccessKey: process.env.BEDROCK_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY || "",
